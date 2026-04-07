@@ -1,0 +1,92 @@
+<header>
+    <h1>{{ film.title }}</h1>
+    <p class="film-status film-status--{{ film.status }}">{{ film.status }}</p>
+</header>
+
+{% if let Some(poster) = film.poster_url %}
+    <figure class="film-poster">
+        <img src="/segments/poster/{{ poster }}" alt="{{ film.title }} poster" width="370" height="556" loading="lazy">
+    </figure>
+{% endif %}
+
+<dl class="film-details">
+    {% if let Some(synopsis) = film.synopsis %}
+        <dt>Synopsis</dt>
+        <dd>{{ synopsis }}</dd>
+    {% endif %}
+    {% if let Some(year) = film.year %}
+        <dt>Year</dt>
+        <dd>{{ year }}</dd>
+    {% endif %}
+    {% if !film.genres.is_empty() %}
+        <dt>Genres</dt>
+        <dd>{{ film.genres.join(", ") }}</dd>
+    {% endif %}
+    {% if let Some(language) = film.language %}
+        <dt>Language</dt>
+        <dd>{{ language }}</dd>
+    {% endif %}
+    {% if let Some(country) = film.country %}
+        <dt>Country</dt>
+        <dd>{{ country }}</dd>
+    {% endif %}
+    <dt>Added</dt>
+    <dd><time datetime="{{ film.created_at }}">{{ film.created_at.format("%e %B %Y") }}</time></dd>
+</dl>
+
+{% if is_owner %}
+    <nav class="film-actions" aria-label="Film actions">
+        <button data-on-click="$$get('/films/{{ film.key_str }}/edit')">Edit</button>
+
+        {% if film.status == "draft" %}
+            <form method="post" action="/films/{{ film.key_str }}/status">
+                <input type="hidden" name="status" value="published">
+                <button type="submit">Publish</button>
+            </form>
+        {% endif %}
+
+        {% if film.status == "published" %}
+            <form method="post" action="/films/{{ film.key_str }}/status">
+                <input type="hidden" name="status" value="archived">
+                <button type="submit">Archive</button>
+            </form>
+        {% endif %}
+
+        {% if film.status == "archived" %}
+            <form method="post" action="/films/{{ film.key_str }}/status">
+                <input type="hidden" name="status" value="draft">
+                <button type="submit">Restore to draft</button>
+            </form>
+        {% endif %}
+    </nav>
+
+    <section class="film-upload" aria-labelledby="upload-heading">
+        <h3 id="upload-heading">Upload video file</h3>
+        <form method="post" action="/films/{{ film.key_str }}/upload" enctype="multipart/form-data">
+            <label for="file">Select video file (MP4, MOV, MKV)</label>
+            <input type="file" id="file" name="file" accept="video/*" required>
+            <button type="submit">Upload and transcode</button>
+        </form>
+    </section>
+
+    <section class="film-poster-upload" aria-labelledby="poster-heading">
+        <h3 id="poster-heading">Upload poster</h3>
+        <form method="post" action="/films/{{ film.key_str }}/poster" enctype="multipart/form-data">
+            <label for="poster">Select poster image (JPEG, PNG, WebP)</label>
+            <input type="file" id="poster" name="poster" accept="image/jpeg,image/png,image/webp" required>
+            <button type="submit">Upload poster</button>
+        </form>
+        <p class="form-hint">Poster will be automatically resized to 4 variants (thumb, small, medium, large).</p>
+    </section>
+
+    <section class="film-enrichment" aria-labelledby="enrich-heading">
+        <h3 id="enrich-heading">Metadata enrichment</h3>
+        <p>Pull metadata, cast, crew, and poster from external databases.</p>
+        <nav>
+            <a href="/films/{{ film.key_str }}/enrich">Search TMDB / IMDB</a>
+            <a href="/films/{{ film.key_str }}/licenses">Manage licenses</a>
+            <a href="/films/{{ film.key_str }}/claims">DMCA claims</a>
+            <a href="/films/{{ film.key_str }}/requests">License requests</a>
+        </nav>
+    </section>
+{% endif %}

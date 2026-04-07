@@ -1,0 +1,44 @@
+[workspace]
+members = [".", "crates/pavilion-media"]
+
+[package]
+name = "pavilion"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+pavilion-media = { path = "crates/pavilion-media" }
+axum = { version = "0.8", features = ["macros", "multipart"] }
+axum-extra = { version = "0.12", features = ["typed-header"] }
+tokio = { version = "1", features = ["full"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "trace", "compression-gzip", "fs"] }
+surrealdb = "3"
+askama = "0.15"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+dotenv = "0.15"
+jsonwebtoken = "10"
+argon2 = "0.5"
+qdrant-client = "1"
+anyhow = "1"
+thiserror = "2"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v7", "serde"] }
+async-stream = "0.3"
+futures = "0.3"
+sysinfo = "0.33"
+humansize = "2"
+reqwest = { version = "0.12", features = ["json"] }
+hmac = "0.12"
+sha2 = "0.10"
+hex = "0.4"
+image = "0.25"
+
+[dev-dependencies]
+surrealdb = { version = "3", features = ["kv-mem"] }
+tokio = { version = "1", features = ["full", "test-util"] }
+tower = { version = "0.5", features = ["util"] }
+http-body-util = "0.1"

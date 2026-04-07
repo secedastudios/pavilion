@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Licenses — {{ film_title }} — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <article class="licenses-page">
+        <header class="page-header">
+            <h1>Licenses for {{ film_title }}</h1>
+            <a href="/films/{{ film_key_str }}/licenses/new">Add license</a>
+        </header>
+
+        {% if licenses.is_empty() %}
+            <section class="empty-state">
+                <p>No licenses configured yet. Add a license to make this film available to curators.</p>
+                <a href="/films/{{ film_key_str }}/licenses/new">Add your first license</a>
+            </section>
+        {% else %}
+            <ul class="license-list">
+                {% for license in licenses %}
+                    <li id="license-{{ license.key_str }}">
+                        {% include "partials/license_detail.html" %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <nav>
+            <a href="/films/{{ film_key_str }}">Back to film</a>
+        </nav>
+    </article>
+</main>
+{% endblock %}

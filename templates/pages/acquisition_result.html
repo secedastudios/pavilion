@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}License {% if status == "approved" %}Acquired{% else %}Requested{% endif %} — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <article class="acquisition-result">
+        {% if status == "approved" %}
+            <h1>License acquired</h1>
+            <p>You now have an active license for <strong>{{ film_title }}</strong>. This film is available for your platform.</p>
+        {% else if status == "pending" %}
+            <h1>License requested</h1>
+            <p>Your request for <strong>{{ film_title }}</strong> has been submitted. The filmmaker will review and respond to your request.</p>
+        {% else if status == "already_requested" %}
+            <h1>Already requested</h1>
+            <p>You already have a pending or active license for <strong>{{ film_title }}</strong>.</p>
+        {% endif %}
+
+        <nav>
+            <a href="/catalog/{{ film_key_str }}">Back to film</a>
+            <a href="/catalog">Browse more films</a>
+        </nav>
+    </article>
+</main>
+{% endblock %}

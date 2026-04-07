@@ -1,0 +1,32 @@
+<header>
+    <h1>{{ platform.name }}</h1>
+    <p class="platform-status platform-status--{{ platform.status }}">{{ platform.status }}</p>
+</header>
+
+<dl class="platform-details">
+    {% if let Some(description) = platform.description %}
+        <dt>Description</dt>
+        <dd>{{ description }}</dd>
+    {% endif %}
+    <dt>URL</dt>
+    <dd><a href="/p/{{ platform.slug }}">/p/{{ platform.slug }}</a></dd>
+    {% if let Some(domain) = platform.domain %}
+        <dt>Custom domain</dt>
+        <dd>{{ domain }}</dd>
+    {% endif %}
+    {% if let Some(model) = platform.monetization_model %}
+        <dt>Monetization</dt>
+        <dd>{{ model }}</dd>
+    {% endif %}
+    <dt>Created</dt>
+    <dd><time datetime="{{ platform.created_at }}">{{ platform.created_at.format("%e %B %Y") }}</time></dd>
+</dl>
+
+<nav class="platform-actions">
+    <button data-on-click="$$get('/platforms/{{ platform.key_str }}/edit')">Edit settings</button>
+    {% if platform.status == "setup" %}
+        <form method="post" action="/platforms/{{ platform.key_str }}/activate">
+            <button type="submit">Activate platform</button>
+        </form>
+    {% endif %}
+</nav>

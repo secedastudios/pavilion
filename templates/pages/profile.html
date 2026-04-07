@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}{{ person.name }} — Pavilion{% endblock %}
+{% block description %}Profile for {{ person.name }} on Pavilion.{% endblock %}
+
+{% block body %}
+<main>
+    <article class="person-profile">
+        <h1>Profile</h1>
+
+        <section id="profile-detail">
+            {% include "partials/profile_display.html" %}
+        </section>
+
+        <nav class="profile-actions" aria-label="Profile actions">
+            <ul>
+                <li><a href="/settings/privacy">Privacy settings</a></li>
+                <li><a href="/settings/data-export">Export my data</a></li>
+            </ul>
+        </nav>
+    </article>
+</main>
+{% endblock %}

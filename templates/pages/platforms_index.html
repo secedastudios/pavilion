@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}My Platforms — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <header class="page-header">
+        <h1>My Platforms</h1>
+        <a href="/platforms/new" class="action-primary">Create a platform</a>
+    </header>
+
+    {% if platforms.is_empty() %}
+        <section class="empty-state">
+            <p>You haven't created any streaming platforms yet.</p>
+            <a href="/platforms/new">Launch your first platform</a>
+        </section>
+    {% else %}
+        <ul class="platform-list">
+            {% for p in platforms %}
+                <li>
+                    <article class="platform-card">
+                        <h2><a href="/platforms/{{ p.key_str }}">{{ p.name }}</a></h2>
+                        <dl>
+                            <dt class="visually-hidden">Status</dt>
+                            <dd class="platform-status platform-status--{{ p.status }}">{{ p.status }}</dd>
+                            <dt class="visually-hidden">URL</dt>
+                            <dd><a href="/p/{{ p.slug }}">/p/{{ p.slug }}</a></dd>
+                            {% if let Some(model) = p.monetization_model %}
+                                <dt class="visually-hidden">Monetization</dt>
+                                <dd>{{ model }}</dd>
+                            {% endif %}
+                        </dl>
+                    </article>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</main>
+{% endblock %}

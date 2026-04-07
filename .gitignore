@@ -1,0 +1,8 @@
+/target
+.claude
+.env
+surreal-data/
+rustfs-data/
+qdrant-data/
+.DS_Store
+history.txt

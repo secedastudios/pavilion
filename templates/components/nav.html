@@ -1,0 +1,21 @@
+<header class="site-header">
+    <nav aria-label="Main">
+        <a href="/" class="site-logo">Pavilion</a>
+        <ul>
+            <li><a href="/catalog">Catalog</a></li>
+            {% if let Some(ref claims) = nav_claims %}
+                <li><a href="/films">My Films</a></li>
+                <li><a href="/platforms">Platforms</a></li>
+                <li><a href="/profile">{{ claims.name }}</a></li>
+                <li>
+                    <form method="post" action="/logout">
+                        <button type="submit">Log out</button>
+                    </form>
+                </li>
+            {% else %}
+                <li><a href="/login">Log in</a></li>
+                <li><a href="/register">Register</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</header>

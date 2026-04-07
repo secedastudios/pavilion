@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}DMCA Designated Agent — Pavilion{% endblock %}
+{% block description %}Contact information for Pavilion's designated DMCA agent.{% endblock %}
+
+{% block body %}
+<main>
+    <article class="legal-document">
+        <h1>DMCA Designated Agent</h1>
+
+        <p>In accordance with the Digital Millennium Copyright Act (17 U.S.C. 512), the following is the designated agent to receive notification of claimed infringement on Pavilion:</p>
+
+        <address>
+            <strong>DMCA Agent</strong><br>
+            Pavilion / SlateHub<br>
+            <a href="mailto:dmca@pavilion.film">dmca@pavilion.film</a>
+        </address>
+
+        <section aria-labelledby="how-to-file">
+            <h2 id="how-to-file">How to file a takedown request</h2>
+            <p>You can file a DMCA takedown request using our <a href="/dmca">online form</a> or by sending a written notice to the agent above containing:</p>
+            <ol>
+                <li>Identification of the copyrighted work claimed to have been infringed</li>
+                <li>Identification of the material that is claimed to be infringing, with enough detail for us to locate it</li>
+                <li>Your contact information (name, address, telephone, email)</li>
+                <li>A statement that you have a good faith belief that the use is not authorized</li>
+                <li>A statement, under penalty of perjury, that the information is accurate and you are authorized to act on behalf of the copyright owner</li>
+                <li>Your physical or electronic signature</li>
+            </ol>
+        </section>
+
+        <section aria-labelledby="counter">
+            <h2 id="counter">Counter-notification</h2>
+            <p>If you believe your content was removed in error, you may file a counter-notification. The content may be restored 10-14 business days after the counter-notification is received, unless the claimant files a court action.</p>
+        </section>
+    </article>
+</main>
+{% endblock %}

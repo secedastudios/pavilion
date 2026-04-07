@@ -1,0 +1,24 @@
+<form data-on-submit="$$put('/films/{{ film_key_str }}/licenses/{{ license.key_str }}')">
+    <fieldset>
+        <legend>Edit license — {{ license.license_type_label }}</legend>
+
+        <input type="hidden" name="license_type" value="{{ license.license_type }}">
+
+        <label for="territories">Territories</label>
+        <input type="text" id="territories" name="territories" value="{{ license.territories.join(", ") }}" placeholder="Worldwide if empty">
+
+        <label for="window_start">Available from</label>
+        <input type="datetime-local" id="window_start" name="window_start" {% if let Some(start) = license.window_start %}value="{{ start.format("%Y-%m-%dT%H:%M") }}"{% endif %}>
+
+        <label for="window_end">Available until</label>
+        <input type="datetime-local" id="window_end" name="window_end" {% if let Some(end) = license.window_end %}value="{{ end.format("%Y-%m-%dT%H:%M") }}"{% endif %}>
+
+        <label class="checkbox-label">
+            <input type="checkbox" name="approval_required" value="yes" {% if license.approval_required %}checked{% endif %}>
+            Require approval
+        </label>
+    </fieldset>
+
+    <button type="submit">Save</button>
+    <button type="button" data-on-click="$$get('/films/{{ film_key_str }}/licenses')">Cancel</button>
+</form>

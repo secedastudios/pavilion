@@ -1,0 +1,15 @@
+<dl class="person-details">
+    <dt>Name</dt>
+    <dd>{{ person.name }}</dd>
+    <dt>Email</dt>
+    <dd>{{ person.email }}</dd>
+    <dt>Roles</dt>
+    <dd>{{ person.roles.join(", ") }}</dd>
+    {% if let Some(bio) = person.bio %}
+        <dt>Bio</dt>
+        <dd>{{ bio }}</dd>
+    {% endif %}
+    <dt>Member since</dt>
+    <dd><time datetime="{{ person.created_at }}">{{ person.created_at.format("%e %B %Y") }}</time></dd>
+</dl>
+<button data-on-click="$$get('/profile/edit')">Edit profile</button>

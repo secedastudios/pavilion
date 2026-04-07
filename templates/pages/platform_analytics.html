@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics — {{ platform_name }} — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <article class="analytics-dashboard">
+        <h1>{{ platform_name }} Analytics</h1>
+
+        <section class="analytics-summary" aria-labelledby="summary-heading">
+            <h2 id="summary-heading" class="visually-hidden">Summary</h2>
+            <dl class="stat-grid">
+                <dt>Total revenue</dt>
+                <dd class="stat-value">{{ total_revenue_display }}</dd>
+
+                <dt>Your share</dt>
+                <dd class="stat-value">{{ curator_share_display }}</dd>
+
+                <dt>Transactions</dt>
+                <dd class="stat-value">{{ overview.total_transactions }}</dd>
+
+                <dt>Active subscribers</dt>
+                <dd class="stat-value">{{ overview.subscriber_count }}</dd>
+
+                <dt>Total views</dt>
+                <dd class="stat-value">{{ overview.total_views }}</dd>
+            </dl>
+        </section>
+
+        <nav>
+            <a href="/platforms/{{ platform_key_str }}">Back to dashboard</a>
+            <a href="/platforms/{{ platform_key_str }}/payments">Payment settings</a>
+        </nav>
+    </article>
+</main>
+{% endblock %}

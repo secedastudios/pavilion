@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}{{ film.title }} — Pavilion{% endblock %}
+{% block description %}{% if let Some(synopsis) = film.synopsis %}{{ synopsis }}{% else %}{{ film.title }} on Pavilion.{% endif %}{% endblock %}
+
+{% block body %}
+<main>
+    <article class="film-detail-page">
+        <section id="film-detail">
+            {% include "partials/film_info.html" %}
+        </section>
+    </article>
+</main>
+{% endblock %}

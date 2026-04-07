@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Persons — Admin — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <article class="admin-persons">
+        <h1>Person Management</h1>
+
+        <table>
+            <caption class="visually-hidden">Registered persons</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Roles</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in persons %}
+                    <tr>
+                        <td>{{ p.name }}</td>
+                        <td>{{ p.email }}</td>
+                        <td>{{ p.roles.join(", ") }}</td>
+                        <td>
+                            <details>
+                                <summary>Actions</summary>
+                                <form method="post" action="/admin/persons/{{ p.key_str }}/roles">
+                                    <label for="roles-{{ p.key_str }}">Roles</label>
+                                    <input type="text" id="roles-{{ p.key_str }}" name="roles" value="{{ p.roles.join(", ") }}">
+                                    <button type="submit">Update</button>
+                                </form>
+                                <a href="/admin/persons/{{ p.key_str }}/export">Export data</a>
+                                <form method="post" action="/admin/persons/{{ p.key_str }}/delete"
+                                      data-on-submit="confirm('Permanently delete this person and all their data?') || evt.preventDefault()">
+                                    <button type="submit" class="danger">Delete (GDPR)</button>
+                                </form>
+                            </details>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <nav><a href="/admin">Back to admin</a></nav>
+    </article>
+</main>
+{% endblock %}

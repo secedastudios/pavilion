@@ -1,0 +1,21 @@
+<section class="transcode-jobs" aria-labelledby="transcode-heading">
+    <h2 id="transcode-heading">Transcoding</h2>
+
+    {% if jobs.is_empty() %}
+        <p>No transcode jobs yet.</p>
+        <form method="post" action="/films/{{ film_key_str }}/transcode">
+            <button type="submit">Start transcoding</button>
+        </form>
+    {% else %}
+        <ul class="job-list">
+            {% for job in jobs %}
+                <li id="job-{{ job.key_str }}">
+                    {% include "partials/transcode_progress.html" %}
+                </li>
+            {% endfor %}
+        </ul>
+        <form method="post" action="/films/{{ film_key_str }}/transcode">
+            <button type="submit">Start new transcode</button>
+        </form>
+    {% endif %}
+</section>

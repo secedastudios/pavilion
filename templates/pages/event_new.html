@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Create Event — {{ platform_name }} — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <article class="event-form">
+        <h1>Create event for {{ platform_name }}</h1>
+
+        {% if let Some(msg) = error %}
+            <p class="form-error" role="alert">{{ msg }}</p>
+        {% endif %}
+
+        <form method="post" action="/platforms/{{ platform_key_str }}/events">
+            <fieldset>
+                <legend>Event details</legend>
+
+                <label for="title">Title</label>
+                <input type="text" id="title" name="title" required>
+
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="3"></textarea>
+
+                <label for="event_type">Event type</label>
+                <select id="event_type" name="event_type" required>
+                    <option value="screening">Screening</option>
+                    <option value="premiere">Premiere</option>
+                    <option value="qa">Q&amp;A</option>
+                </select>
+
+                <label for="film_id">Film ID</label>
+                <input type="text" id="film_id" name="film_id" required placeholder="The film to screen">
+            </fieldset>
+
+            <fieldset>
+                <legend>Schedule</legend>
+
+                <label for="start_time">Start time</label>
+                <input type="datetime-local" id="start_time" name="start_time" required>
+
+                <label for="end_time">End time (optional)</label>
+                <input type="datetime-local" id="end_time" name="end_time">
+            </fieldset>
+
+            <fieldset>
+                <legend>Ticketing</legend>
+
+                <label for="max_attendees">Max attendees (optional)</label>
+                <input type="number" id="max_attendees" name="max_attendees" min="1">
+
+                <label for="ticket_price">Ticket price in $ (leave empty for free)</label>
+                <input type="number" id="ticket_price" name="ticket_price" step="0.01" min="0">
+            </fieldset>
+
+            <button type="submit">Create event</button>
+        </form>
+
+        <nav>
+            <a href="/platforms/{{ platform_key_str }}/events">Back to events</a>
+        </nav>
+    </article>
+</main>
+{% endblock %}

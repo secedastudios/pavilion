@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Settings — {{ platform_name }} — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <article class="payment-settings">
+        <h1>Payment Settings — {{ platform_name }}</h1>
+
+        {% if !payments_enabled %}
+            <section class="empty-state">
+                <p>Payments are not configured on this Pavilion instance. Set <code>STRIPE_SECRET_KEY</code> in your environment to enable payment processing.</p>
+            </section>
+        {% else %}
+            <section aria-labelledby="connect-heading">
+                <h2 id="connect-heading">Stripe Connect</h2>
+
+                {% if onboarding_complete %}
+                    <p class="payment-status payment-status--active">Connected and active</p>
+                    <p>Your Stripe account is connected. Viewer payments will be processed through your account.</p>
+                {% else %}
+                    <p>Connect your Stripe account to receive payments from viewers on your platform.</p>
+                    <form method="post" action="/platforms/{{ platform_key_str }}/payments/connect">
+                        <button type="submit">Connect with Stripe</button>
+                    </form>
+                {% endif %}
+            </section>
+        {% endif %}
+
+        <nav>
+            <a href="/platforms/{{ platform_key_str }}">Back to dashboard</a>
+        </nav>
+    </article>
+</main>
+{% endblock %}

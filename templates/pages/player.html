@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ film.title }} — {{ platform.name }}</title>
+    <meta name="description" content="Watch {{ film.title }} on {{ platform.name }}">
+    <link rel="stylesheet" href="/static/css/main.css">
+    {% if !theme_css.is_empty() %}<style>{{ theme_css }}</style>{% endif %}
+</head>
+<body class="player-page">
+    <header class="player-header">
+        <nav aria-label="Player">
+            <a href="/p/{{ platform.slug }}" class="site-logo">{{ platform.name }}</a>
+            <a href="/p/{{ platform.slug }}/{{ film.slug }}">Back to film</a>
+        </nav>
+    </header>
+
+    <main>
+        <article class="video-player" aria-labelledby="film-title">
+            <h1 id="film-title" class="visually-hidden">{{ film.title }}</h1>
+
+            <figure class="player-container">
+                <video
+                    id="video-player"
+                    controls
+                    preload="metadata"
+                    aria-label="{{ film.title }}"
+                    data-manifest="{{ manifest_url }}"
+                    data-resume="{{ resume_position }}"
+                >
+                    <p>Your browser does not support HTML5 video. <a href="{{ manifest_url }}">Download the video</a>.</p>
+                </video>
+                <figcaption class="visually-hidden">{{ film.title }}</figcaption>
+            </figure>
+
+            <section class="player-info">
+                <h2>{{ film.title }}</h2>
+                <dl>
+                    {% if let Some(year) = film.year %}
+                        <dt class="visually-hidden">Year</dt>
+                        <dd>{{ year }}</dd>
+                    {% endif %}
+                    {% if !film.genres.is_empty() %}
+                        <dt class="visually-hidden">Genres</dt>
+                        <dd>{{ film.genres.join(", ") }}</dd>
+                    {% endif %}
+                </dl>
+                {% if let Some(synopsis) = film.synopsis %}
+                    <p>{{ synopsis }}</p>
+                {% endif %}
+            </section>
+        </article>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script type="module">
+        const video = document.getElementById('video-player');
+        const manifestUrl = video.dataset.manifest;
+        const resumePosition = parseInt(video.dataset.resume, 10) || 0;
+        const platformSlug = '{{ platform.slug }}';
+        const filmSlug = '{{ film.slug }}';
+
+        // Initialize HLS.js for non-Safari browsers
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(manifestUrl);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                if (resumePosition > 0) {
+                    video.currentTime = resumePosition;
+                }
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Safari native HLS
+            video.src = manifestUrl;
+            video.addEventListener('loadedmetadata', () => {
+                if (resumePosition > 0) {
+                    video.currentTime = resumePosition;
+                }
+            });
+        }
+
+        // Playhead heartbeat every 15 seconds
+        let lastReported = -1;
+        setInterval(() => {
+            if (video.paused || video.ended) return;
+            const position = Math.floor(video.currentTime);
+            if (position === lastReported) return;
+            lastReported = position;
+
+            const body = new URLSearchParams({
+                position: position.toString(),
+                duration: Math.floor(video.duration || 0).toString(),
+            });
+
+            fetch(`/watch/${platformSlug}/${filmSlug}/heartbeat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body,
+            }).catch(() => {});
+        }, 15000);
+    </script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@starfederation/datastar"></script>
+</body>
+</html>

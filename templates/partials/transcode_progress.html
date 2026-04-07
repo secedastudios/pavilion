@@ -1,0 +1,24 @@
+<dl class="transcode-job">
+    <dt class="visually-hidden">Status</dt>
+    <dd class="job-status job-status--{{ job.status }}">{{ job.status }}</dd>
+
+    <dt class="visually-hidden">Progress</dt>
+    <dd>
+        <progress value="{{ job.progress_pct }}" max="100">{{ job.progress_pct }}%</progress>
+        <span>{{ job.progress_pct }}%</span>
+    </dd>
+
+    {% if let Some(error_msg) = job.error_msg %}
+        <dt class="visually-hidden">Error</dt>
+        <dd class="job-error">{{ error_msg }}</dd>
+    {% endif %}
+
+    <dt class="visually-hidden">Retries</dt>
+    <dd>{{ job.retry_count }}/{{ job.max_retries }}</dd>
+</dl>
+
+{% if job.status != "complete" && job.status != "failed" %}
+    <div data-on-load="$$get('/films/{{ job.film_key_str }}/transcode/{{ job.key_str }}/progress')"
+         data-on-interval.2s="$$get('/films/{{ job.film_key_str }}/transcode/{{ job.key_str }}/progress')">
+    </div>
+{% endif %}

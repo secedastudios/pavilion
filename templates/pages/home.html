@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Pavilion — Open Film Distribution Platform{% endblock %}
+{% block description %}Upload your film once. Set your licensing terms. Reach every screen. Pavilion gives independent filmmakers real control over distribution while curators launch branded streaming platforms in hours.{% endblock %}
+{% block og_title %}Pavilion — One Upload. Infinite Screens. Your Rules.{% endblock %}
+{% block og_description %}The open-source film distribution platform where creators keep control and curators build the streaming services they want.{% endblock %}
+
+{% block head %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Pavilion",
+    "description": "Open-source film distribution and white-label OTT platform for independent filmmakers and curators.",
+    "url": "https://pavilion.film",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Web",
+    "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "description": "Open source, self-hostable"
+    }
+}
+</script>
+{% endblock %}
+
+{% block body %}
+<header class="site-header">
+    <nav aria-label="Main">
+        <a href="/" class="site-logo">Pavilion</a>
+        <ul>
+            {% if let Some(claims) = claims %}
+                <li><a href="/films">My Films</a></li>
+                <li><a href="/profile">{{ claims.name }}</a></li>
+                <li>
+                    <form method="post" action="/logout">
+                        <button type="submit">Log out</button>
+                    </form>
+                </li>
+            {% else %}
+                <li><a href="/login">Log in</a></li>
+                <li><a href="/register" class="nav-cta">Get started</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <!-- Hero -->
+    <section class="hero" aria-labelledby="hero-heading">
+        <h1 id="hero-heading">Your film deserves more than a locked drawer</h1>
+        <p class="hero-sub">Upload once. Set your licensing terms. Reach every screen. Pavilion is the open-source distribution platform that puts independent filmmakers back in charge.</p>
+        <nav class="hero-actions" aria-label="Get started">
+            <a href="/register" class="action-primary">Start distributing your film</a>
+            <a href="#how-it-works" class="action-secondary">See how it works</a>
+        </nav>
+    </section>
+
+    <!-- Problem -->
+    <section class="problem" aria-labelledby="problem-heading">
+        <h2 id="problem-heading">The indie distribution trap</h2>
+        <p>You spent years making your film. Then you hand it to an aggregator who takes 30%, gives you a quarterly PDF, and owns the relationship with your audience. Or you go it alone with a Vimeo link and hope for the best.</p>
+        <p>There has to be something better. There is.</p>
+    </section>
+
+    <!-- Solution overview -->
+    <section class="solution" aria-labelledby="solution-heading">
+        <h2 id="solution-heading">One upload. Infinite screens. Your rules.</h2>
+
+        <dl class="value-props">
+            <dt>You keep ownership</dt>
+            <dd>Your film, your licensing terms, your audience data. Pavilion never takes rights. Change your terms or pull your content any time.</dd>
+
+            <dt>Curators come to you</dt>
+            <dd>Festivals, educators, and streaming entrepreneurs browse a shared, rights-aware catalog. They see only films they're allowed to use. No awkward emails. No deal sheets.</dd>
+
+            <dt>Every distribution model, one platform</dt>
+            <dd>Rental, purchase, subscription, ad-supported, event screening, educational, or Creative Commons. Mix and match per territory and time window. Pavilion enforces it all automatically.</dd>
+
+            <dt>Revenue flows back to you</dt>
+            <dd>Real-time reporting. Automatic splits. No waiting 90 days for a statement you can't verify. You see every transaction as it happens.</dd>
+        </dl>
+    </section>
+
+    <!-- How it works -->
+    <section class="how-it-works" id="how-it-works" aria-labelledby="how-heading">
+        <h2 id="how-heading">How it works</h2>
+        <ol class="steps">
+            <li>
+                <h3>Upload your film</h3>
+                <p>Drop in your master file. Pavilion automatically creates adaptive bitrate packages up to 4K with HLS and DASH for every device.</p>
+            </li>
+            <li>
+                <h3>Set your terms</h3>
+                <p>Choose which licensing models work for you. Set prices, territories, and time windows. Require approval or allow instant licensing.</p>
+            </li>
+            <li>
+                <h3>Curators build with your work</h3>
+                <p>Streaming platforms, festival programs, and educational libraries pull your film from the catalog. Each one gets a branded experience; you get paid.</p>
+            </li>
+            <li>
+                <h3>Get paid, stay informed</h3>
+                <p>Revenue splits happen automatically. You see every view, every transaction, every screen your film appears on.</p>
+            </li>
+        </ol>
+    </section>
+
+    <!-- Two audiences -->
+    <section class="audiences" aria-labelledby="audiences-heading">
+        <h2 id="audiences-heading">Built for both sides of the screen</h2>
+
+        <article class="audience-card" aria-labelledby="filmmakers-heading">
+            <h3 id="filmmakers-heading">For filmmakers</h3>
+            <ul>
+                <li>Upload once, distribute everywhere</li>
+                <li>Adaptive bitrate transcoding up to 4K handled for you</li>
+                <li>Set rental, subscription, ad-supported, or event pricing per territory</li>
+                <li>Real-time revenue reporting and automatic payouts</li>
+                <li>DMCA tools protect your work across every platform</li>
+                <li>Full GDPR compliance built in</li>
+            </ul>
+            <a href="/register" class="action-primary">Create your filmmaker account</a>
+        </article>
+
+        <article class="audience-card" aria-labelledby="curators-heading">
+            <h3 id="curators-heading">For curators, festivals, and entrepreneurs</h3>
+            <ul>
+                <li>Launch a branded streaming platform in hours, not months</li>
+                <li>Browse a rights-aware catalog — only see films you can use</li>
+                <li>Custom domain, branded player, your colors and fonts</li>
+                <li>Monetize with subscriptions, pay-per-view, or ads</li>
+                <li>Built-in live screening and event tools</li>
+                <li>Semantic search to find films by concept, not just keywords</li>
+            </ul>
+            <a href="/register" class="action-primary">Launch your streaming platform</a>
+        </article>
+    </section>
+
+    <!-- Technical credibility -->
+    <section class="technical" aria-labelledby="tech-heading">
+        <h2 id="tech-heading">Serious infrastructure for serious filmmakers</h2>
+        <dl class="tech-specs">
+            <dt>Adaptive streaming</dt>
+            <dd>HLS and DASH with CMAF segments. H.264, HEVC, and AV1. Works on every device, every connection.</dd>
+
+            <dt>Up to 4K</dt>
+            <dd>Six-rung quality ladder from 360p to 2160p. Your audience always gets the best their connection can handle.</dd>
+
+            <dt>Rights enforcement</dt>
+            <dd>Every video request passes through the licensing engine. No valid license, no content. Signed URLs, token-bound sessions, zero bypass.</dd>
+
+            <dt>Open source, self-hostable</dt>
+            <dd>Run Pavilion on your own infrastructure. No vendor lock-in. Clusters for SurrealDB, RustFS, and Qdrant scale with you.</dd>
+
+            <dt>Built with Rust</dt>
+            <dd>Fast, safe, and memory-efficient. Your streaming platform runs on the same technology trusted by the most performance-critical systems.</dd>
+        </dl>
+    </section>
+
+    <!-- Licensing models -->
+    <section class="licensing-models" aria-labelledby="licensing-heading">
+        <h2 id="licensing-heading">Every way to distribute, one place to manage</h2>
+        <dl class="model-list">
+            <dt>Transactional (TVOD)</dt>
+            <dd>Rent for $3.99 for 48 hours. Sell to own for $9.99. You set the price.</dd>
+
+            <dt>Subscription (SVOD)</dt>
+            <dd>Let curators include your film in monthly catalogs. Flat fee or revenue share based on actual watch time.</dd>
+
+            <dt>Ad-Supported (AVOD)</dt>
+            <dd>Free for viewers. You earn from ads with the revenue share you choose.</dd>
+
+            <dt>Events and Screenings</dt>
+            <dd>Flat fee or ticket split for virtual premieres, festival screenings, and community showings.</dd>
+
+            <dt>Educational</dt>
+            <dd>Special terms for universities, libraries, and institutions.</dd>
+
+            <dt>Creative Commons</dt>
+            <dd>Maximum reach when that matters more than revenue. CC BY, CC BY-SA, CC BY-NC, and more.</dd>
+
+            <dt>Hybrid and Split-Rights</dt>
+            <dd>Different models for different territories and time windows. Theatrical window, then PVOD, then SVOD, then AVOD. Your film, your strategy.</dd>
+        </dl>
+    </section>
+
+    <!-- Open source ethos -->
+    <section class="open-source" aria-labelledby="oss-heading">
+        <h2 id="oss-heading">Why open source matters for film</h2>
+        <p>Closed platforms change their terms. They raise their fees. They get acquired and shut down. Your distribution strategy shouldn't depend on someone else's business model.</p>
+        <p>Pavilion is open source and self-hostable. The code is yours to inspect, modify, and run on your own infrastructure. Built as part of the SlateHub ecosystem, your talent profile, credits, and films live in one place.</p>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="final-cta" aria-labelledby="cta-heading">
+        <h2 id="cta-heading">Your film is finished. Your distribution is just beginning.</h2>
+        <p>Join filmmakers who are taking back control of how their work reaches audiences.</p>
+        <nav class="cta-actions" aria-label="Create account">
+            <a href="/register" class="action-primary">Create your free account</a>
+        </nav>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <nav aria-label="Footer">
+        <ul>
+            <li><a href="/terms">Terms of Use</a></li>
+            <li><a href="/privacy">Privacy Policy</a></li>
+            <li><a href="/content-policy">Content Policy</a></li>
+        </ul>
+    </nav>
+    <p>Pavilion is open source under the SlateHub umbrella.</p>
+</footer>
+{% endblock %}

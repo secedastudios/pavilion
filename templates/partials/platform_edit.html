@@ -1,0 +1,32 @@
+<form data-on-submit="$$put('/platforms/{{ platform.key_str }}')">
+    <fieldset>
+        <legend>Edit platform</legend>
+
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" value="{{ platform.name }}" required>
+
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="3">{% if let Some(desc) = platform.description %}{{ desc }}{% endif %}</textarea>
+
+        <label for="monetization_model">Monetization</label>
+        <select id="monetization_model" name="monetization_model">
+            <option value="">Select</option>
+            <option value="subscription" {% if platform.monetization_model.as_deref() == Some("subscription") %}selected{% endif %}>Subscription</option>
+            <option value="pay-per-view" {% if platform.monetization_model.as_deref() == Some("pay-per-view") %}selected{% endif %}>Pay-per-view</option>
+            <option value="ad-supported" {% if platform.monetization_model.as_deref() == Some("ad-supported") %}selected{% endif %}>Ad-supported</option>
+            <option value="free" {% if platform.monetization_model.as_deref() == Some("free") %}selected{% endif %}>Free</option>
+            <option value="hybrid" {% if platform.monetization_model.as_deref() == Some("hybrid") %}selected{% endif %}>Hybrid</option>
+        </select>
+
+        <label for="primary_color">Primary color</label>
+        <input type="color" id="primary_color" name="primary_color" value="{% if let Some(t) = platform.theme %}{% if let Some(c) = t.primary_color %}{{ c }}{% else %}#2563eb{% endif %}{% else %}#2563eb{% endif %}">
+
+        <label class="checkbox-label">
+            <input type="checkbox" name="dark_mode" value="yes" {% if let Some(t) = platform.theme %}{% if t.dark_mode == Some(true) %}checked{% endif %}{% endif %}>
+            Dark mode
+        </label>
+    </fieldset>
+
+    <button type="submit">Save</button>
+    <button type="button" data-on-click="$$get('/platforms/{{ platform.key_str }}')">Cancel</button>
+</form>

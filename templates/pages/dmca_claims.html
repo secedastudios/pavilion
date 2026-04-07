@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}DMCA Claims — {{ film_title }} — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <article class="dmca-claims">
+        <header class="page-header">
+            <h1>DMCA Claims — {{ film_title }}</h1>
+        </header>
+
+        {% if claims.is_empty() %}
+            <section class="empty-state">
+                <p>No DMCA claims have been filed against this film.</p>
+            </section>
+        {% else %}
+            <ul class="request-list">
+                {% for claim in claims %}
+                    <li class="request-card">
+                        <dl>
+                            <dt>Status</dt>
+                            <dd class="dmca-status dmca-status--{{ claim.status }}">{{ claim.status }}</dd>
+
+                            <dt>Claimant</dt>
+                            <dd>{{ claim.claimant_name }} ({{ claim.claimant_email }})</dd>
+
+                            <dt>Description</dt>
+                            <dd>{{ claim.description }}</dd>
+
+                            <dt>Filed</dt>
+                            <dd><time datetime="{{ claim.filed_at }}">{{ claim.filed_at.format("%e %B %Y") }}</time></dd>
+
+                            {% if let Some(reviewed) = claim.reviewed_at %}
+                                <dt>Reviewed</dt>
+                                <dd><time datetime="{{ reviewed }}">{{ reviewed.format("%e %B %Y") }}</time></dd>
+                            {% endif %}
+                        </dl>
+
+                        {% if claim.status == "filed" || claim.status == "under_review" || claim.status == "upheld" %}
+                            <details>
+                                <summary>File counter-notification</summary>
+                                <form method="post" action="/films/{{ film_key_str }}/claims/{{ claim.key_str }}/counter">
+                                    <label for="reason-{{ claim.key_str }}">Reason for counter-notification</label>
+                                    <textarea id="reason-{{ claim.key_str }}" name="reason" rows="3" required placeholder="Explain why this claim is invalid"></textarea>
+                                    <button type="submit">Submit counter-notification</button>
+                                </form>
+                            </details>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <nav>
+            <a href="/films/{{ film_key_str }}">Back to film</a>
+        </nav>
+    </article>
+</main>
+{% endblock %}

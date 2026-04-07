@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}License Requests — {{ film_title }} — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <article class="requests-page">
+        <header class="page-header">
+            <h1>License requests for {{ film_title }}</h1>
+        </header>
+
+        {% if requests.is_empty() %}
+            <section class="empty-state">
+                <p>No license requests yet.</p>
+            </section>
+        {% else %}
+            <ul class="request-list">
+                {% for req in requests %}
+                    <li class="request-card">
+                        <dl>
+                            <dt>Status</dt>
+                            <dd class="request-status request-status--{{ req.status }}">{{ req.status }}</dd>
+
+                            <dt>Requested</dt>
+                            <dd><time datetime="{{ req.requested_at }}">{{ req.requested_at.format("%e %B %Y %H:%M") }}</time></dd>
+
+                            {% if let Some(resolved) = req.resolved_at %}
+                                <dt>Resolved</dt>
+                                <dd><time datetime="{{ resolved }}">{{ resolved.format("%e %B %Y %H:%M") }}</time></dd>
+                            {% endif %}
+                        </dl>
+
+                        {% if req.status == "pending" %}
+                            <nav class="request-actions">
+                                <form method="post" action="/films/{{ film_key_str }}/requests/{{ req.key_str }}/approve">
+                                    <button type="submit">Approve</button>
+                                </form>
+                                <form method="post" action="/films/{{ film_key_str }}/requests/{{ req.key_str }}/reject">
+                                    <button type="submit" class="danger">Reject</button>
+                                </form>
+                            </nav>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <nav>
+            <a href="/films/{{ film_key_str }}">Back to film</a>
+        </nav>
+    </article>
+</main>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy — Pavilion{% endblock %}
+{% block description %}How Pavilion collects, uses, and protects your personal data under GDPR.{% endblock %}
+
+{% block body %}
+<main>
+    <article class="legal-document">
+        <h1>Privacy Policy</h1>
+        <p><time datetime="2026-04-05">Effective: 5 April 2026</time></p>
+
+        <section aria-labelledby="data-controller">
+            <h2 id="data-controller">1. Data Controller</h2>
+            <p>Pavilion operates as a data controller under the General Data Protection Regulation (GDPR). For data protection inquiries, contact our Data Protection Officer at the address listed at the bottom of this page.</p>
+        </section>
+
+        <section aria-labelledby="data-collected">
+            <h2 id="data-collected">2. Data We Collect</h2>
+            <dl>
+                <dt>Account data</dt>
+                <dd>Name, email address, and hashed password when you register.</dd>
+                <dt>Profile data</dt>
+                <dd>Optional biography, avatar, and linked SlateHub account.</dd>
+                <dt>Content data</dt>
+                <dd>Films, metadata, and licensing terms you provide.</dd>
+                <dt>Usage data</dt>
+                <dd>Watch history, playhead positions, and platform interactions (only with your analytics consent).</dd>
+                <dt>Transaction data</dt>
+                <dd>Payment records, revenue splits, and payout history.</dd>
+            </dl>
+        </section>
+
+        <section aria-labelledby="legal-basis">
+            <h2 id="legal-basis">3. Legal Basis</h2>
+            <ul>
+                <li><strong>Contract performance</strong> — processing necessary to provide our services.</li>
+                <li><strong>Consent</strong> — marketing communications and analytics tracking (you can withdraw at any time).</li>
+                <li><strong>Legitimate interest</strong> — security, fraud prevention, and service improvement.</li>
+                <li><strong>Legal obligation</strong> — tax records, DMCA compliance.</li>
+            </ul>
+        </section>
+
+        <section aria-labelledby="your-rights">
+            <h2 id="your-rights">4. Your Rights</h2>
+            <p>Under GDPR, you have the right to:</p>
+            <ul>
+                <li><strong>Access</strong> — request a copy of all your personal data (<a href="/settings/data-export">export your data</a>).</li>
+                <li><strong>Rectification</strong> — correct inaccurate data via your <a href="/profile">profile settings</a>.</li>
+                <li><strong>Erasure</strong> — delete your account and all associated data (<a href="/settings/privacy">privacy settings</a>).</li>
+                <li><strong>Portability</strong> — receive your data in machine-readable JSON format.</li>
+                <li><strong>Withdraw consent</strong> — change your <a href="/settings/privacy">privacy preferences</a> at any time.</li>
+            </ul>
+        </section>
+
+        <section aria-labelledby="cookies">
+            <h2 id="cookies">5. Cookies</h2>
+            <p>Pavilion uses only essential cookies (authentication tokens). Analytics cookies are set only with your explicit consent. No third-party tracking cookies are used.</p>
+        </section>
+
+        <section aria-labelledby="retention">
+            <h2 id="retention">6. Data Retention</h2>
+            <p>Account data is retained while your account is active. Watch session details are automatically purged after a configurable retention period. Transaction records are retained as required by applicable tax law. Upon account deletion, all personal data is permanently removed.</p>
+        </section>
+
+        <section aria-labelledby="contact">
+            <h2 id="contact">7. Contact</h2>
+            <address>
+                Data Protection Officer<br>
+                Pavilion / SlateHub<br>
+                <a href="mailto:dpo@pavilion.film">dpo@pavilion.film</a>
+            </address>
+        </section>
+    </article>
+</main>
+{% endblock %}

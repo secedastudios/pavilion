@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Events — {{ platform_name }} — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <header class="page-header">
+        <h1>Events — {{ platform_name }}</h1>
+        <a href="/platforms/{{ platform_key_str }}/events/new" class="action-primary">Create event</a>
+    </header>
+
+    {% if events.is_empty() %}
+        <section class="empty-state">
+            <p>No events scheduled yet.</p>
+        </section>
+    {% else %}
+        <ul class="event-list">
+            {% for event in events %}
+                <li>
+                    <article class="event-card">
+                        <h2><a href="/events/{{ event.key_str }}">{{ event.title }}</a></h2>
+                        <dl>
+                            <dt class="visually-hidden">Type</dt>
+                            <dd>{{ event.event_type }}</dd>
+                            <dt class="visually-hidden">Status</dt>
+                            <dd class="event-status event-status--{{ event.status }}">{{ event.status }}</dd>
+                            <dt class="visually-hidden">Date</dt>
+                            <dd><time datetime="{{ event.start_time }}">{{ event.start_time.format("%e %B %Y %H:%M UTC") }}</time></dd>
+                            <dt class="visually-hidden">Price</dt>
+                            <dd>{{ event.ticket_price_display }}</dd>
+                            <dt class="visually-hidden">Attendees</dt>
+                            <dd>{{ event.attendee_count }}{% if let Some(max) = event.max_attendees %} / {{ max }}{% endif %}</dd>
+                        </dl>
+                    </article>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <nav>
+        <a href="/platforms/{{ platform_key_str }}">Back to dashboard</a>
+    </nav>
+</main>
+{% endblock %}

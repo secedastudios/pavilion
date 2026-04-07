@@ -1,0 +1,43 @@
+<article class="license-card {% if !license.active %}license-card--inactive{% endif %}">
+    <header>
+        <h3>{{ license.license_type_label }}</h3>
+        {% if !license.active %}
+            <span class="license-inactive">Inactive</span>
+        {% endif %}
+    </header>
+
+    <dl>
+        <dt>Pricing</dt>
+        <dd>{{ license.pricing_summary }}</dd>
+
+        {% if !license.territories.is_empty() %}
+            <dt>Territories</dt>
+            <dd>{{ license.territories.join(", ") }}</dd>
+        {% else %}
+            <dt>Territories</dt>
+            <dd>Worldwide</dd>
+        {% endif %}
+
+        {% if let Some(start) = license.window_start %}
+            <dt>Available from</dt>
+            <dd><time datetime="{{ start }}">{{ start.format("%e %B %Y") }}</time></dd>
+        {% endif %}
+
+        {% if let Some(end) = license.window_end %}
+            <dt>Available until</dt>
+            <dd><time datetime="{{ end }}">{{ end.format("%e %B %Y") }}</time></dd>
+        {% endif %}
+
+        <dt>Approval required</dt>
+        <dd>{% if license.approval_required %}Yes{% else %}No (instant){% endif %}</dd>
+    </dl>
+
+    <nav class="license-actions">
+        <button data-on-click="$$get('/films/{{ film_key_str }}/licenses/{{ license.key_str }}/edit')">Edit</button>
+        {% if license.active %}
+            <form method="post" action="/films/{{ film_key_str }}/licenses/{{ license.key_str }}/deactivate">
+                <button type="submit">Deactivate</button>
+            </form>
+        {% endif %}
+    </nav>
+</article>

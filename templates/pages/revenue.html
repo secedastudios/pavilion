@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Revenue — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <article class="revenue-dashboard">
+        <h1>Revenue</h1>
+
+        <section class="revenue-summary" aria-labelledby="summary-heading">
+            <h2 id="summary-heading" class="visually-hidden">Summary</h2>
+            <dl class="stat-grid">
+                <dt>Total earned</dt>
+                <dd class="stat-value">{{ total_earned_display }}</dd>
+
+                <dt>Transactions</dt>
+                <dd class="stat-value">{{ overview.total_transactions }}</dd>
+            </dl>
+        </section>
+
+        {% if overview.total_earned_cents == 0 %}
+            <section class="empty-state">
+                <p>No revenue yet. Revenue will appear here once viewers start paying for your films on curator platforms.</p>
+            </section>
+        {% endif %}
+    </article>
+</main>
+{% endblock %}

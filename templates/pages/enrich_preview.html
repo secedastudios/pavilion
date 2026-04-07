@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Preview Enrichment — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <article class="enrichment-preview">
+        <h1>Preview: {{ data.title }}</h1>
+
+        <dl class="film-details">
+            {% if let Some(tagline) = data.tagline %}
+                <dt>Tagline</dt>
+                <dd><em>{{ tagline }}</em></dd>
+            {% endif %}
+            {% if let Some(synopsis) = data.synopsis %}
+                <dt>Synopsis</dt>
+                <dd>{{ synopsis }}</dd>
+            {% endif %}
+            {% if let Some(year) = data.year %}
+                <dt>Year</dt>
+                <dd>{{ year }}</dd>
+            {% endif %}
+            {% if let Some(runtime) = data.runtime_minutes %}
+                <dt>Runtime</dt>
+                <dd>{{ runtime }} minutes</dd>
+            {% endif %}
+            {% if !data.genres.is_empty() %}
+                <dt>Genres</dt>
+                <dd>{{ data.genres.join(", ") }}</dd>
+            {% endif %}
+            {% if let Some(imdb) = data.imdb_id %}
+                <dt>IMDB</dt>
+                <dd>{{ imdb }}</dd>
+            {% endif %}
+        </dl>
+
+        {% if !data.cast.is_empty() %}
+            <section aria-labelledby="cast-preview">
+                <h2 id="cast-preview">Cast (top 10)</h2>
+                <ul class="cast-list">
+                    {% for member in data.cast.iter().take(10) %}
+                        <li>
+                            <strong>{{ member.name }}</strong>
+                            {% if let Some(character) = member.character %} as {{ character }}{% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+
+        <form method="post" action="/films/{{ film_key_str }}/enrich/apply">
+            <input type="hidden" name="tmdb_id" value="{{ data.tmdb_id }}">
+            <button type="submit" class="action-primary">Apply this data</button>
+        </form>
+
+        <nav>
+            <a href="/films/{{ film_key_str }}/enrich">Back to search</a>
+        </nav>
+    </article>
+</main>
+{% endblock %}

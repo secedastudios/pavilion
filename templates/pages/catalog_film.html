@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}{{ film.title }} — Catalog — Pavilion{% endblock %}
+{% block description %}{% if let Some(synopsis) = film.synopsis %}{{ synopsis }}{% else %}{{ film.title }} available on Pavilion.{% endif %}{% endblock %}
+{% block og_type %}video.movie{% endblock %}
+
+{% block head %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Movie",
+    "name": "{{ film.title }}",
+    {% if let Some(synopsis) = film.synopsis %}"description": "{{ synopsis }}",{% endif %}
+    {% if let Some(year) = film.year %}"dateCreated": "{{ year }}",{% endif %}
+    {% if let Some(language) = film.language %}"inLanguage": "{{ language }}",{% endif %}
+    {% if let Some(country) = film.country %}"countryOfOrigin": { "@type": "Country", "name": "{{ country }}" },{% endif %}
+    "url": "https://pavilion.film/catalog/{{ film.key_str }}"
+}
+</script>
+{% endblock %}
+
+{% block body %}
+<header class="site-header">
+    <nav aria-label="Main">
+        <a href="/" class="site-logo">Pavilion</a>
+        <ul>
+            {% if let Some(claims) = claims %}
+                <li><a href="/films">My Films</a></li>
+                <li><a href="/profile">{{ claims.name }}</a></li>
+            {% else %}
+                <li><a href="/login">Log in</a></li>
+                <li><a href="/register" class="nav-cta">Get started</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <ol>
+            <li><a href="/catalog">Catalog</a></li>
+            <li aria-current="page">{{ film.title }}</li>
+        </ol>
+    </nav>
+
+    <article class="catalog-film-detail">
+        <header>
+            <h1>{{ film.title }}</h1>
+        </header>
+
+        <dl class="film-details">
+            {% if let Some(synopsis) = film.synopsis %}
+                <dt>Synopsis</dt>
+                <dd>{{ synopsis }}</dd>
+            {% endif %}
+            {% if let Some(year) = film.year %}
+                <dt>Year</dt>
+                <dd>{{ year }}</dd>
+            {% endif %}
+            {% if !film.genres.is_empty() %}
+                <dt>Genres</dt>
+                <dd>{{ film.genres.join(", ") }}</dd>
+            {% endif %}
+            {% if let Some(language) = film.language %}
+                <dt>Language</dt>
+                <dd>{{ language }}</dd>
+            {% endif %}
+            {% if let Some(country) = film.country %}
+                <dt>Country</dt>
+                <dd>{{ country }}</dd>
+            {% endif %}
+        </dl>
+
+        {% if !licenses.is_empty() %}
+            <section aria-labelledby="available-licenses">
+                <h2 id="available-licenses">Available licenses</h2>
+                <ul class="license-options">
+                    {% for license in licenses %}
+                        <li class="license-option">
+                            <article>
+                                <h3>{{ license.license_type_label }}</h3>
+                                <p>{{ license.pricing_summary }}</p>
+
+                                {% if !license.territories.is_empty() %}
+                                    <p class="license-territories">Available in: {{ license.territories.join(", ") }}</p>
+                                {% else %}
+                                    <p class="license-territories">Available worldwide</p>
+                                {% endif %}
+
+                                {% if license.approval_required %}
+                                    <p class="license-approval">Requires filmmaker approval</p>
+                                {% endif %}
+
+                                {% if let Some(_claims) = claims %}
+                                    <form method="post" action="/catalog/{{ film.key_str }}/acquire">
+                                        <input type="hidden" name="license_id" value="{{ license.key_str }}">
+                                        <button type="submit">
+                                            {% if license.approval_required %}Request license{% else %}Acquire license{% endif %}
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <p><a href="/register">Register to acquire this license</a></p>
+                                {% endif %}
+                            </article>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+    </article>
+</main>
+{% endblock %}

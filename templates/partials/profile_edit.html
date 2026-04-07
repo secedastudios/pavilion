@@ -1,0 +1,14 @@
+<form data-on-submit="$$put('/profile')">
+    <fieldset>
+        <legend>Edit profile</legend>
+
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" value="{{ person.name }}" required minlength="1">
+
+        <label for="bio">Bio</label>
+        <textarea id="bio" name="bio" rows="4">{% if let Some(bio) = person.bio %}{{ bio }}{% endif %}</textarea>
+    </fieldset>
+
+    <button type="submit">Save</button>
+    <button type="button" data-on-click="$$get('/profile')">Cancel</button>
+</form>

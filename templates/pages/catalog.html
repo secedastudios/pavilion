@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Catalog — Pavilion{% endblock %}
+{% block description %}Browse licensed films available for your streaming platform.{% endblock %}
+
+{% block body %}
+<header class="site-header">
+    <nav aria-label="Main">
+        <a href="/" class="site-logo">Pavilion</a>
+        <ul>
+            {% if let Some(claims) = claims %}
+                <li><a href="/films">My Films</a></li>
+                <li><a href="/profile">{{ claims.name }}</a></li>
+            {% else %}
+                <li><a href="/login">Log in</a></li>
+                <li><a href="/register" class="nav-cta">Get started</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <section class="catalog" aria-labelledby="catalog-heading">
+        <h1 id="catalog-heading">Film Catalog</h1>
+
+        <search>
+            <form method="get" action="/catalog" class="catalog-search">
+                <fieldset>
+                    <legend class="visually-hidden">Search and filter films</legend>
+
+                    <label for="q" class="visually-hidden">Search</label>
+                    <input type="search" id="q" name="q" value="{{ query }}" placeholder="Search films by title or description">
+
+                    <label for="genre" class="visually-hidden">Genre</label>
+                    <input type="text" id="genre" name="genre" value="{{ genre_filter }}" placeholder="Genre">
+
+                    <label for="year" class="visually-hidden">Year</label>
+                    <input type="number" id="year" name="year" value="{{ year_filter }}" placeholder="Year" min="1888" max="2100">
+
+                    <label for="language" class="visually-hidden">Language</label>
+                    <input type="text" id="language" name="language" value="{{ language_filter }}" placeholder="Language">
+
+                    <button type="submit">Search</button>
+                </fieldset>
+            </form>
+        </search>
+
+        {% if films.is_empty() %}
+            <section class="empty-state">
+                <p>No films match your search. Try broadening your filters.</p>
+            </section>
+        {% else %}
+            <ul class="catalog-grid">
+                {% for film in films %}
+                    <li>
+                        <article class="catalog-card">
+                            <h2><a href="/catalog/{{ film.key_str }}">{{ film.title }}</a></h2>
+                            <dl>
+                                {% if let Some(year) = film.year %}
+                                    <dt class="visually-hidden">Year</dt>
+                                    <dd>{{ year }}</dd>
+                                {% endif %}
+                                {% if !film.genres.is_empty() %}
+                                    <dt class="visually-hidden">Genres</dt>
+                                    <dd>{{ film.genres.join(", ") }}</dd>
+                                {% endif %}
+                                {% if let Some(language) = film.language %}
+                                    <dt class="visually-hidden">Language</dt>
+                                    <dd>{{ language }}</dd>
+                                {% endif %}
+                                {% if let Some(country) = film.country %}
+                                    <dt class="visually-hidden">Country</dt>
+                                    <dd>{{ country }}</dd>
+                                {% endif %}
+                            </dl>
+                            {% if let Some(synopsis) = film.synopsis %}
+                                <p class="catalog-synopsis">{{ synopsis }}</p>
+                            {% endif %}
+                        </article>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+</main>
+{% endblock %}

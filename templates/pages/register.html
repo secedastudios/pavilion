@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Register — Pavilion{% endblock %}
+{% block description %}Create your Pavilion account to distribute your films or launch a streaming platform.{% endblock %}
+
+{% block body %}
+<main>
+    <article class="auth-form">
+        <h1>Create your account</h1>
+
+        {% if let Some(msg) = error %}
+            <p class="form-error" role="alert">{{ msg }}</p>
+        {% endif %}
+
+        <form method="post" action="/register">
+            <fieldset>
+                <legend>Account details</legend>
+
+                <label for="name">Full name</label>
+                <input type="text" id="name" name="name" required minlength="1" autocomplete="name">
+
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required autocomplete="email">
+
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password">
+
+                <label for="password_confirm">Confirm password</label>
+                <input type="password" id="password_confirm" name="password_confirm" required minlength="8" autocomplete="new-password">
+            </fieldset>
+
+            <fieldset>
+                <legend>Terms &amp; Content Policy</legend>
+                <p>You must agree to all of the following to create an account:</p>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="accept_terms" value="yes" required>
+                    I agree to the <a href="/terms" target="_blank">Terms of Use</a> and <a href="/content-policy" target="_blank">Content Policy</a>
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="accept_no_porn" value="yes" required>
+                    I understand that no pornographic content is permitted on this platform
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="accept_copyright" value="yes" required>
+                    I confirm I am the copyright holder or have written authorization for all content I upload
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="accept_talent" value="yes" required>
+                    I confirm all content and talent releases have been obtained
+                </label>
+            </fieldset>
+
+            <fieldset>
+                <legend>Privacy preferences (optional)</legend>
+                <p>You can change these at any time in your <a href="/settings/privacy">privacy settings</a>.</p>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="consent_marketing" value="yes">
+                    I consent to receiving marketing communications
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="consent_analytics" value="yes">
+                    I consent to analytics tracking to improve the platform
+                </label>
+            </fieldset>
+
+            <button type="submit">Create account</button>
+        </form>
+
+        <p class="auth-alt">Already have an account? <a href="/login">Log in</a></p>
+        <p class="auth-alt"><a href="/auth/slatehub">Sign in with SlateHub</a></p>
+    </article>
+</main>
+{% endblock %}

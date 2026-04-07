@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Billing — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <article class="billing-dashboard">
+        <h1>Billing &amp; Storage</h1>
+
+        <section aria-labelledby="storage-heading">
+            <h2 id="storage-heading">Storage Usage</h2>
+            <dl class="stat-grid">
+                <dt>Total storage</dt>
+                <dd class="stat-value">{{ storage_display }}</dd>
+
+                <dt>Master files</dt>
+                <dd class="stat-value">{{ master_display }}</dd>
+
+                <dt>Renditions</dt>
+                <dd class="stat-value">{{ rendition_display }}</dd>
+
+                <dt>Films</dt>
+                <dd class="stat-value">{{ film_count }}</dd>
+
+                <dt>Assets</dt>
+                <dd class="stat-value">{{ asset_count }}</dd>
+            </dl>
+        </section>
+
+        <section aria-labelledby="plan-heading">
+            <h2 id="plan-heading">Current Plan</h2>
+            <dl class="stat-grid">
+                <dt>Tier</dt>
+                <dd class="stat-value">{{ current_tier }}</dd>
+
+                <dt>Estimated monthly cost</dt>
+                <dd class="stat-value">{{ estimated_cost_display }}</dd>
+            </dl>
+        </section>
+
+        <section aria-labelledby="credits-heading">
+            <h2 id="credits-heading">Credits</h2>
+            <dl class="stat-grid">
+                <dt>Balance</dt>
+                <dd class="stat-value">{{ credit_balance_display }}</dd>
+            </dl>
+        </section>
+    </article>
+</main>
+{% endblock %}

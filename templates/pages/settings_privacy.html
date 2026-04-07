@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Settings — Pavilion{% endblock %}
+{% block description %}Manage your privacy preferences and GDPR rights.{% endblock %}
+
+{% block body %}
+<main>
+    <article class="privacy-settings">
+        <h1>Privacy Settings</h1>
+
+        <section aria-labelledby="consent-heading">
+            <h2 id="consent-heading">Consent preferences</h2>
+            <form data-on-submit="$$put('/settings/privacy')">
+                <fieldset>
+                    <legend>Data processing consent</legend>
+
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="consent_marketing" value="yes" {% if marketing %}checked{% endif %}>
+                        Marketing communications
+                    </label>
+
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="consent_analytics" value="yes" {% if analytics %}checked{% endif %}>
+                        Analytics tracking
+                    </label>
+                </fieldset>
+
+                <button type="submit">Save preferences</button>
+            </form>
+            <div id="consent-result"></div>
+        </section>
+
+        <section aria-labelledby="data-heading">
+            <h2 id="data-heading">Your data</h2>
+
+            <dl>
+                <dt>Data export</dt>
+                <dd>
+                    <p>Download a copy of all your personal data in JSON format.</p>
+                    <a href="/settings/data-export">Download my data</a>
+                </dd>
+
+                <dt>Delete account</dt>
+                <dd>
+                    <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
+                    <form method="post" action="/settings/delete-account"
+                          data-on-submit="confirm('Are you sure you want to permanently delete your account? This cannot be undone.') || evt.preventDefault()">
+                        <button type="submit" class="danger">Delete my account</button>
+                    </form>
+                </dd>
+            </dl>
+        </section>
+    </article>
+</main>
+{% endblock %}

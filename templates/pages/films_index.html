@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}My Films — Pavilion{% endblock %}
+{% block description %}Manage your films on Pavilion.{% endblock %}
+
+{% block body %}
+<main>
+    <header class="page-header">
+        <h1>My Films</h1>
+        <a href="/films/new">Add a film</a>
+    </header>
+
+    {% if films.is_empty() %}
+        <section class="empty-state">
+            <p>You haven't added any films yet.</p>
+            <a href="/films/new">Upload your first film</a>
+        </section>
+    {% else %}
+        <ul class="film-list">
+            {% for film in films %}
+                <li>
+                    <article class="film-card">
+                        <h2><a href="/films/{{ film.key_str }}">{{ film.title }}</a></h2>
+                        <dl>
+                            {% if let Some(year) = film.year %}
+                                <dt class="visually-hidden">Year</dt>
+                                <dd>{{ year }}</dd>
+                            {% endif %}
+                            <dt class="visually-hidden">Status</dt>
+                            <dd class="film-status film-status--{{ film.status }}">{{ film.status }}</dd>
+                            {% if !film.genres.is_empty() %}
+                                <dt class="visually-hidden">Genres</dt>
+                                <dd>{{ film.genres.join(", ") }}</dd>
+                            {% endif %}
+                        </dl>
+                    </article>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</main>
+{% endblock %}

@@ -1,0 +1,28 @@
+services:
+    surrealdb:
+        image: surrealdb/surrealdb:v3
+        command: start --user root --pass root --bind 0.0.0.0:8000 surrealkv://data/pavilion.db
+        ports:
+            - "8001:8000"
+        volumes:
+            - ./surreal-data:/data
+
+    rustfs:
+        image: rustfs/rustfs:latest
+        command: /data
+        ports:
+            - "9002:9000"
+            - "9003:9001"
+        environment:
+            RUSTFS_ROOT_USER: rustfsadmin
+            RUSTFS_ROOT_PASSWORD: rustfsadmin
+        volumes:
+            - ./rustfs-data:/data
+
+    qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+            - "6335:6333"
+            - "6336:6334"
+        volumes:
+            - ./qdrant-data:/qdrant/storage

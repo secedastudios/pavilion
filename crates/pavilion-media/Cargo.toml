@@ -1,0 +1,24 @@
+[package]
+name = "pavilion-media"
+version = "0.1.0"
+edition = "2024"
+description = "Video storage, transcoding, and secure streaming library. Upload to S3-compatible storage, transcode with FFmpeg to HLS/DASH (CMAF), serve with signed time-limited tokens."
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+rust-s3 = { version = "0.37", default-features = false, features = ["tokio-rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+thiserror = "2"
+tracing = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
+hmac = "0.12"
+sha2 = "0.10"
+base64 = "0.22"
+async-trait = "0.1"
+futures = "0.3"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full", "test-util"] }

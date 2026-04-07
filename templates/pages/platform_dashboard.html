@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}{{ platform.name }} Dashboard — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <article class="platform-dashboard">
+        <section id="platform-detail">
+            {% include "partials/platform_info.html" %}
+        </section>
+
+        <section aria-labelledby="content-heading">
+            <header class="page-header">
+                <h2 id="content-heading">Content</h2>
+            </header>
+
+            {% if films.is_empty() %}
+                <section class="empty-state">
+                    <p>No films added yet. Browse the catalog to add films to your platform.</p>
+                    <a href="/catalog">Browse catalog</a>
+                </section>
+            {% else %}
+                <ul class="film-list">
+                    {% for film in films %}
+                        <li>
+                            <article class="film-card">
+                                <h3><a href="/p/{{ platform.slug }}/{{ film.slug }}">{{ film.title }}</a></h3>
+                                <dl>
+                                    {% if let Some(year) = film.year %}
+                                        <dt class="visually-hidden">Year</dt>
+                                        <dd>{{ year }}</dd>
+                                    {% endif %}
+                                    {% if !film.genres.is_empty() %}
+                                        <dt class="visually-hidden">Genres</dt>
+                                        <dd>{{ film.genres.join(", ") }}</dd>
+                                    {% endif %}
+                                </dl>
+                                <form method="post" action="/platforms/{{ platform.key_str }}/content/{{ film.key_str }}/remove">
+                                    <button type="submit" class="danger">Remove</button>
+                                </form>
+                            </article>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <details>
+                <summary>Add a film by ID</summary>
+                <form method="post" action="/platforms/{{ platform.key_str }}/content">
+                    <fieldset>
+                        <legend class="visually-hidden">Add film</legend>
+                        <label for="film_id">Film ID</label>
+                        <input type="text" id="film_id" name="film_id" required placeholder="Film record ID">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="featured" value="yes">
+                            Feature this film
+                        </label>
+                    </fieldset>
+                    <button type="submit">Add film</button>
+                </form>
+            </details>
+        </section>
+
+        <nav>
+            <a href="/platforms">Back to platforms</a>
+            {% if platform.status == "active" %}
+                <a href="/p/{{ platform.slug }}">View public site</a>
+            {% endif %}
+        </nav>
+    </article>
+</main>
+{% endblock %}

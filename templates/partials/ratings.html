@@ -1,0 +1,55 @@
+<section class="film-ratings" aria-labelledby="ratings-heading">
+    <h2 id="ratings-heading">Ratings</h2>
+
+    {% if stats.count > 0 %}
+        <p class="rating-summary">
+            <strong>{{ stats.average }}</strong> / 5
+            <span class="rating-count">({{ stats.count }} rating{% if stats.count != 1 %}s{% endif %})</span>
+        </p>
+    {% else %}
+        <p class="rating-summary">No ratings yet.</p>
+    {% endif %}
+
+    {% if can_rate %}
+        <form data-on-submit="$$post('/p/{{ platform_slug }}/films/{{ film_key_str }}/rate')">
+            <fieldset>
+                <legend>{% if user_rating.is_some() %}Update your rating{% else %}Rate this film{% endif %}</legend>
+
+                <label for="score">Score (1-5)</label>
+                <select id="score" name="score" required>
+                    <option value="">Select</option>
+                    {% for i in 1..=5 %}
+                        <option value="{{ i }}" {% if let Some(ur) = user_rating %}{% if ur.score == i %}selected{% endif %}{% endif %}>{{ i }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="review_text">Review (optional)</label>
+                <textarea id="review_text" name="review_text" rows="2">{% if let Some(ur) = user_rating %}{% if let Some(text) = ur.review_text %}{{ text }}{% endif %}{% endif %}</textarea>
+
+                <button type="submit">{% if user_rating.is_some() %}Update{% else %}Submit{% endif %}</button>
+                {% if user_rating.is_some() %}
+                    <button type="button" data-on-click="$$delete('/p/{{ platform_slug }}/films/{{ film_key_str }}/rate')">Remove rating</button>
+                {% endif %}
+            </fieldset>
+        </form>
+    {% endif %}
+
+    {% if !ratings.is_empty() %}
+        <ul class="rating-list">
+            {% for r in ratings %}
+                <li class="rating-item">
+                    <dl>
+                        <dt class="visually-hidden">Score</dt>
+                        <dd class="rating-score">{{ r.score }}/5</dd>
+                        {% if let Some(text) = r.review_text %}
+                            <dt class="visually-hidden">Review</dt>
+                            <dd>{{ text }}</dd>
+                        {% endif %}
+                        <dt class="visually-hidden">Date</dt>
+                        <dd class="rating-date"><time datetime="{{ r.created_at }}">{{ r.created_at.format("%e %b %Y") }}</time></dd>
+                    </dl>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</section>

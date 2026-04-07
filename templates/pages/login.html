@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Log in — Pavilion{% endblock %}
+{% block description %}Log in to your Pavilion account.{% endblock %}
+
+{% block body %}
+<main>
+    <article class="auth-form">
+        <h1>Log in</h1>
+
+        {% if let Some(msg) = error %}
+            <p class="form-error" role="alert">{{ msg }}</p>
+        {% endif %}
+
+        <form method="post" action="/login">
+            <fieldset>
+                <legend>Credentials</legend>
+
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required autocomplete="email">
+
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+            </fieldset>
+
+            <button type="submit">Log in</button>
+        </form>
+
+        <p class="auth-alt">Don't have an account? <a href="/register">Register</a></p>
+        <p class="auth-alt"><a href="/auth/slatehub">Sign in with SlateHub</a></p>
+    </article>
+</main>
+{% endblock %}

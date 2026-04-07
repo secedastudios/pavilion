@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Content Policy — Pavilion{% endblock %}
+{% block description %}Pavilion's content standards and prohibited material policy.{% endblock %}
+
+{% block body %}
+<main>
+    <article class="legal-document">
+        <h1>Content Policy</h1>
+        <p><time datetime="2026-04-05">Effective: 5 April 2026</time></p>
+
+        <section aria-labelledby="overview">
+            <h2 id="overview">Overview</h2>
+            <p>Pavilion is a platform for independent filmmakers to distribute their work. All content must comply with these standards. Violations may result in content removal and account suspension.</p>
+        </section>
+
+        <section aria-labelledby="requirements">
+            <h2 id="requirements">Content Requirements</h2>
+            <p>All content uploaded to Pavilion must meet the following requirements:</p>
+            <ol>
+                <li><strong>Copyright ownership</strong> — You must be the copyright holder or have written authorization from the copyright holder for all uploaded content.</li>
+                <li><strong>Talent clearance</strong> — All performers, actors, and recognizable individuals appearing in your content must have provided signed releases.</li>
+                <li><strong>Music and soundtrack rights</strong> — All music, sound effects, and audio must be original, licensed, or in the public domain.</li>
+                <li><strong>Location releases</strong> — Content filmed in private locations must have appropriate location releases.</li>
+            </ol>
+        </section>
+
+        <section aria-labelledby="prohibited-content">
+            <h2 id="prohibited-content">Prohibited Content</h2>
+            <p>The following content is <strong>strictly prohibited</strong> and will be immediately removed:</p>
+            <ul>
+                <li>Pornographic or sexually explicit material of any kind</li>
+                <li>Content depicting the sexual exploitation of minors</li>
+                <li>Content promoting terrorism, violent extremism, or radicalization</li>
+                <li>Content inciting hatred based on race, ethnicity, religion, gender, sexual orientation, or disability</li>
+                <li>Non-consensual intimate imagery</li>
+                <li>Content that infringes on intellectual property rights of others</li>
+                <li>Fraudulent, deceptive, or misleading content</li>
+            </ul>
+        </section>
+
+        <section aria-labelledby="enforcement">
+            <h2 id="enforcement">Enforcement</h2>
+            <dl>
+                <dt>First violation</dt>
+                <dd>Content removed, written warning issued.</dd>
+                <dt>Second violation</dt>
+                <dd>Content removed, account suspended for 30 days.</dd>
+                <dt>Third violation or severe first offense</dt>
+                <dd>Account permanently terminated.</dd>
+            </dl>
+            <p>We also comply with DMCA takedown requests. See our <a href="/dmca">DMCA policy</a> for details.</p>
+        </section>
+
+        <section aria-labelledby="reporting">
+            <h2 id="reporting">Reporting Violations</h2>
+            <p>If you believe content on Pavilion violates this policy, please report it via our <a href="/dmca">DMCA and takedown request form</a> or contact us at <a href="mailto:abuse@pavilion.film">abuse@pavilion.film</a>.</p>
+        </section>
+    </article>
+</main>
+{% endblock %}

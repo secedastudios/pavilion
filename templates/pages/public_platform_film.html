@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ film.title }} — {{ platform.name }}</title>
+    <meta name="description" content="{% if let Some(synopsis) = film.synopsis %}{{ synopsis }}{% else %}{{ film.title }} on {{ platform.name }}{% endif %}">
+    <meta property="og:title" content="{{ film.title }} — {{ platform.name }}">
+    <meta property="og:type" content="video.movie">
+    <link rel="stylesheet" href="/static/css/main.css">
+    {% if !theme_css.is_empty() %}<style>{{ theme_css }}</style>{% endif %}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Movie",
+        "name": "{{ film.title }}",
+        {% if let Some(synopsis) = film.synopsis %}"description": "{{ synopsis }}",{% endif %}
+        {% if let Some(year) = film.year %}"dateCreated": "{{ year }}",{% endif %}
+        "url": "/p/{{ platform.slug }}/{{ film.slug }}"
+    }
+    </script>
+</head>
+<body>
+    <header class="site-header">
+        <nav aria-label="Main">
+            <a href="/p/{{ platform.slug }}" class="site-logo">{{ platform.name }}</a>
+        </nav>
+    </header>
+
+    <main>
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <ol>
+                <li><a href="/p/{{ platform.slug }}">{{ platform.name }}</a></li>
+                <li aria-current="page">{{ film.title }}</li>
+            </ol>
+        </nav>
+
+        <article class="catalog-film-detail">
+            <header>
+                <h1>{{ film.title }}</h1>
+            </header>
+
+            <dl class="film-details">
+                {% if let Some(synopsis) = film.synopsis %}
+                    <dt>Synopsis</dt>
+                    <dd>{{ synopsis }}</dd>
+                {% endif %}
+                {% if let Some(year) = film.year %}
+                    <dt>Year</dt>
+                    <dd>{{ year }}</dd>
+                {% endif %}
+                {% if !film.genres.is_empty() %}
+                    <dt>Genres</dt>
+                    <dd>{{ film.genres.join(", ") }}</dd>
+                {% endif %}
+                {% if let Some(language) = film.language %}
+                    <dt>Language</dt>
+                    <dd>{{ language }}</dd>
+                {% endif %}
+                {% if let Some(country) = film.country %}
+                    <dt>Country</dt>
+                    <dd>{{ country }}</dd>
+                {% endif %}
+            </dl>
+        </article>
+    </main>
+
+    <footer class="site-footer">
+        <p>Powered by <a href="/">Pavilion</a></p>
+    </footer>
+
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@starfederation/datastar"></script>
+</body>
+</html>

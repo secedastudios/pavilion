@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}DMCA Claims — Admin — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <article class="admin-dmca">
+        <h1>DMCA Claims</h1>
+
+        {% if claims.is_empty() %}
+            <section class="empty-state"><p>No DMCA claims.</p></section>
+        {% else %}
+            <table>
+                <caption class="visually-hidden">DMCA claims</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Status</th>
+                        <th scope="col">Claimant</th>
+                        <th scope="col">Film</th>
+                        <th scope="col">Filed</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in claims %}
+                        <tr>
+                            <td class="dmca-status dmca-status--{{ c.status }}">{{ c.status }}</td>
+                            <td>{{ c.claimant_name }}</td>
+                            <td>{{ c.film_key_str }}</td>
+                            <td><time datetime="{{ c.filed_at }}">{{ c.filed_at.format("%e %b %Y") }}</time></td>
+                            <td>
+                                {% if c.status == "filed" || c.status == "under_review" || c.status == "counter_filed" %}
+                                    <form method="post" action="/admin/dmca/{{ c.key_str }}">
+                                        <input type="hidden" name="action" value="uphold">
+                                        <button type="submit">Uphold</button>
+                                    </form>
+                                    <form method="post" action="/admin/dmca/{{ c.key_str }}">
+                                        <input type="hidden" name="action" value="reject">
+                                        <button type="submit">Reject</button>
+                                    </form>
+                                {% endif %}
+                                {% if c.status == "upheld" %}
+                                    <form method="post" action="/admin/dmca/{{ c.key_str }}">
+                                        <input type="hidden" name="action" value="resolve">
+                                        <button type="submit">Resolve</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        <nav><a href="/admin">Back to admin</a></nav>
+    </article>
+</main>
+{% endblock %}

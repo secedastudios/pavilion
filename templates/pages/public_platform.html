@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ platform.name }}</title>
+    <meta name="description" content="{% if let Some(desc) = platform.description %}{{ desc }}{% else %}{{ platform.name }} — Streaming powered by Pavilion{% endif %}">
+    <meta property="og:title" content="{{ platform.name }}">
+    <meta property="og:type" content="website">
+    <link rel="stylesheet" href="/static/css/main.css">
+    {% if !theme_css.is_empty() %}<style>{{ theme_css }}</style>{% endif %}
+</head>
+<body>
+    <header class="site-header">
+        <nav aria-label="Main">
+            <a href="/p/{{ platform.slug }}" class="site-logo">{{ platform.name }}</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero" aria-labelledby="platform-hero">
+            <h1 id="platform-hero">{{ platform.name }}</h1>
+            {% if let Some(desc) = platform.description %}
+                <p class="hero-sub">{{ desc }}</p>
+            {% endif %}
+        </section>
+
+        {% if films.is_empty() %}
+            <section class="empty-state">
+                <p>Content coming soon.</p>
+            </section>
+        {% else %}
+            <section aria-labelledby="browse-heading">
+                <h2 id="browse-heading">Browse</h2>
+                <ul class="catalog-grid">
+                    {% for film in films %}
+                        <li>
+                            <article class="catalog-card">
+                                <h3><a href="/p/{{ platform.slug }}/{{ film.slug }}">{{ film.title }}</a></h3>
+                                <dl>
+                                    {% if let Some(year) = film.year %}
+                                        <dt class="visually-hidden">Year</dt>
+                                        <dd>{{ year }}</dd>
+                                    {% endif %}
+                                    {% if !film.genres.is_empty() %}
+                                        <dt class="visually-hidden">Genres</dt>
+                                        <dd>{{ film.genres.join(", ") }}</dd>
+                                    {% endif %}
+                                </dl>
+                                {% if let Some(synopsis) = film.synopsis %}
+                                    <p class="catalog-synopsis">{{ synopsis }}</p>
+                                {% endif %}
+                            </article>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+    </main>
+
+    <footer class="site-footer">
+        <p>Powered by <a href="/">Pavilion</a></p>
+    </footer>
+
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@starfederation/datastar"></script>
+</body>
+</html>

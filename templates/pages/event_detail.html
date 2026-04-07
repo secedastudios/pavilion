@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }} — Pavilion{% endblock %}
+{% block description %}{% if let Some(desc) = event.description %}{{ desc }}{% else %}{{ event.title }} on Pavilion{% endif %}{% endblock %}
+
+{% block body %}
+<main>
+    <article class="event-detail">
+        <header>
+            <h1>{{ event.title }}</h1>
+            <p class="event-status event-status--{{ event.status }}">{{ event.status }}</p>
+        </header>
+
+        <dl class="event-info">
+            {% if let Some(desc) = event.description %}
+                <dt>Description</dt>
+                <dd>{{ desc }}</dd>
+            {% endif %}
+
+            <dt>Type</dt>
+            <dd>{{ event.event_type }}</dd>
+
+            <dt>Date</dt>
+            <dd><time datetime="{{ event.start_time }}">{{ event.start_time.format("%e %B %Y at %H:%M UTC") }}</time></dd>
+
+            {% if let Some(end) = event.end_time %}
+                <dt>Ends</dt>
+                <dd><time datetime="{{ end }}">{{ end.format("%H:%M UTC") }}</time></dd>
+            {% endif %}
+
+            <dt>Price</dt>
+            <dd>{{ event.ticket_price_display }}</dd>
+
+            <dt>Attendees</dt>
+            <dd>{{ event.attendee_count }}{% if let Some(max) = event.max_attendees %} / {{ max }}{% endif %}</dd>
+        </dl>
+
+        {% if event.status == "upcoming" || event.status == "live" %}
+            {% if let Some(_c) = claims %}
+                {% if is_attending %}
+                    <p class="ticket-confirmed">You are registered for this event.</p>
+                    {% if event.status == "live" %}
+                        <a href="/watch/{{ event.platform_key_str }}/{{ event.film_key_str }}" class="action-primary">Join screening</a>
+                    {% endif %}
+                {% else %}
+                    <form method="post" action="/events/{{ event.key_str }}/tickets">
+                        <button type="submit" class="action-primary">
+                            {% if event.ticket_price_cents.is_some() %}Buy ticket ({{ event.ticket_price_display }}){% else %}Register (free){% endif %}
+                        </button>
+                    </form>
+                {% endif %}
+            {% else %}
+                <p><a href="/register">Register to attend this event</a></p>
+            {% endif %}
+        {% endif %}
+
+        {% if is_curator %}
+            <nav class="event-actions" aria-label="Event management">
+                {% if event.status == "upcoming" %}
+                    <form method="post" action="/events/{{ event.key_str }}/status">
+                        <input type="hidden" name="status" value="live">
+                        <button type="submit">Go live</button>
+                    </form>
+                    <form method="post" action="/events/{{ event.key_str }}/status">
+                        <input type="hidden" name="status" value="canceled">
+                        <button type="submit" class="danger">Cancel event</button>
+                    </form>
+                {% endif %}
+                {% if event.status == "live" %}
+                    <form method="post" action="/events/{{ event.key_str }}/status">
+                        <input type="hidden" name="status" value="ended">
+                        <button type="submit">End event</button>
+                    </form>
+                {% endif %}
+            </nav>
+        {% endif %}
+    </article>
+</main>
+{% endblock %}

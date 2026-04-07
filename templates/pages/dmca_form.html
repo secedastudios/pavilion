@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}DMCA Takedown Request — Pavilion{% endblock %}
+{% block description %}Submit a DMCA takedown request for copyrighted content on Pavilion.{% endblock %}
+
+{% block body %}
+<main>
+    <article class="legal-document">
+        <h1>DMCA Takedown Request</h1>
+
+        {% if success %}
+            <section class="dmca-success">
+                <h2>Claim submitted</h2>
+                <p>Your DMCA takedown request has been received and will be reviewed. You will be contacted at the email address you provided.</p>
+                <p><a href="/dmca">Submit another claim</a></p>
+            </section>
+        {% else %}
+            <p>If you believe content on Pavilion infringes on your copyright, please complete this form. All fields marked as required must be filled in.</p>
+
+            {% if let Some(msg) = error %}
+                <p class="form-error" role="alert">{{ msg }}</p>
+            {% endif %}
+
+            <form method="post" action="/dmca">
+                <fieldset>
+                    <legend>Your information</legend>
+
+                    <label for="claimant_name">Full legal name</label>
+                    <input type="text" id="claimant_name" name="claimant_name" required>
+
+                    <label for="claimant_email">Email address</label>
+                    <input type="email" id="claimant_email" name="claimant_email" required>
+
+                    <label for="claimant_company">Company (optional)</label>
+                    <input type="text" id="claimant_company" name="claimant_company">
+                </fieldset>
+
+                <fieldset>
+                    <legend>Infringing content</legend>
+
+                    <label for="film_id">Film ID</label>
+                    <input type="text" id="film_id" name="film_id" required placeholder="The ID of the infringing film">
+
+                    <label for="description">Description of the copyrighted work</label>
+                    <textarea id="description" name="description" rows="4" required placeholder="Describe the copyrighted work that is being infringed"></textarea>
+
+                    <label for="evidence_url">Evidence URL (optional)</label>
+                    <input type="url" id="evidence_url" name="evidence_url" placeholder="Link to the original work or registration">
+                </fieldset>
+
+                <fieldset>
+                    <legend>Legal declarations</legend>
+
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="good_faith" value="yes" required>
+                        I have a good faith belief that use of the material in the manner complained of is not authorized by the copyright owner, its agent, or the law.
+                    </label>
+
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="perjury" value="yes" required>
+                        I declare under penalty of perjury that the information in this notification is accurate and that I am the copyright owner or authorized to act on behalf of the copyright owner.
+                    </label>
+                </fieldset>
+
+                <button type="submit">Submit takedown request</button>
+            </form>
+        {% endif %}
+
+        <nav>
+            <a href="/dmca/agent">DMCA designated agent</a>
+        </nav>
+    </article>
+</main>
+{% endblock %}

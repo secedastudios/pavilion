@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Pavilion Showcase — Watch Independent Films{% endblock %}
+{% block description %}The Pavilion Showcase demonstrates a fully working streaming site powered by Pavilion. Browse and watch independent films.{% endblock %}
+
+{% block body %}
+<header class="site-header">
+    <nav aria-label="Main">
+        <a href="/showcase" class="site-logo">Pavilion Showcase</a>
+        <ul>
+            {% if let Some(claims) = claims %}
+                <li><a href="/profile">{{ claims.name }}</a></li>
+            {% else %}
+                <li><a href="/login">Log in</a></li>
+                <li><a href="/register" class="nav-cta">Join</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <section class="hero" aria-labelledby="showcase-hero">
+        <h1 id="showcase-hero">Independent cinema, your way</h1>
+        <p class="hero-sub">The Pavilion Showcase is a reference streaming site demonstrating the full Pavilion platform. Browse films, watch trailers, and experience what curators can build.</p>
+    </section>
+
+    {% if films.is_empty() %}
+        <section class="empty-state">
+            <p>No films available yet. Check back soon.</p>
+        </section>
+    {% else %}
+        <section aria-labelledby="browse-heading">
+            <h2 id="browse-heading">Now Showing</h2>
+            <ul class="catalog-grid">
+                {% for film in films %}
+                    <li>
+                        <article class="catalog-card">
+                            <h3><a href="/catalog/{{ film.key_str }}">{{ film.title }}</a></h3>
+                            <dl>
+                                {% if let Some(year) = film.year %}
+                                    <dt class="visually-hidden">Year</dt>
+                                    <dd>{{ year }}</dd>
+                                {% endif %}
+                                {% if !film.genres.is_empty() %}
+                                    <dt class="visually-hidden">Genres</dt>
+                                    <dd>{{ film.genres.join(", ") }}</dd>
+                                {% endif %}
+                            </dl>
+                            {% if let Some(synopsis) = film.synopsis %}
+                                <p class="catalog-synopsis">{{ synopsis }}</p>
+                            {% endif %}
+                        </article>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+
+    <section class="open-source" aria-labelledby="build-heading">
+        <h2 id="build-heading">Build your own streaming site</h2>
+        <p>This showcase runs on Pavilion, the open-source film distribution platform. Curators can launch their own branded streaming service in hours — with their own domain, player, and monetization.</p>
+        <nav class="cta-actions">
+            <a href="/register" class="action-primary">Create a platform</a>
+            <a href="/" class="action-secondary">Learn more</a>
+        </nav>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <nav aria-label="Footer">
+        <ul>
+            <li><a href="/terms">Terms</a></li>
+            <li><a href="/privacy">Privacy</a></li>
+            <li><a href="/">Powered by Pavilion</a></li>
+        </ul>
+    </nav>
+</footer>
+{% endblock %}

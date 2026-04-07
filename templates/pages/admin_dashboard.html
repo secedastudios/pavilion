@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Admin — Pavilion{% endblock %}
+
+{% block body %}
+<main>
+    <article class="admin-dashboard">
+        <h1>Admin Dashboard</h1>
+
+        <section aria-labelledby="overview-heading">
+            <h2 id="overview-heading">System Overview</h2>
+            <dl class="stat-grid">
+                <dt>Persons</dt>
+                <dd class="stat-value">{{ person_count }}</dd>
+                <dt>Films</dt>
+                <dd class="stat-value">{{ film_count }}</dd>
+                <dt>Platforms</dt>
+                <dd class="stat-value">{{ platform_count }}</dd>
+                <dt>Pending DMCA</dt>
+                <dd class="stat-value">{{ pending_dmca }}</dd>
+                <dt>Active streams</dt>
+                <dd class="stat-value">{{ active_streams }}</dd>
+                <dt>Transcode queue</dt>
+                <dd class="stat-value">{{ queued_jobs }}</dd>
+            </dl>
+        </section>
+
+        <nav aria-label="Admin navigation">
+            <ul>
+                <li><a href="/admin/persons">Manage persons</a></li>
+                <li><a href="/admin/dmca">DMCA claims</a></li>
+            </ul>
+        </nav>
+    </article>
+</main>
+{% endblock %}
