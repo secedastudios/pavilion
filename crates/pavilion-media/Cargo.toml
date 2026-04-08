@@ -1,9 +1,12 @@
 [package]
 name = "pavilion-media"
-version = "0.1.0"
+version = "0.1.0-alpha"
 edition = "2024"
+authors = ["Seceda Studios <hello@secedastudios.com>"]
 description = "Video storage, transcoding, and secure streaming library. Upload to S3-compatible storage, transcode with FFmpeg to HLS/DASH (CMAF), serve with signed time-limited tokens."
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/secedastudios/pavilion"
+keywords = ["video", "streaming", "hls", "dash", "transcode"]
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }

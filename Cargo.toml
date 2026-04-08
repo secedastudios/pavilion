@@ -3,11 +3,15 @@ members = [".", "crates/pavilion-media"]
 
 [package]
 name = "pavilion"
-version = "0.1.0"
+version = "0.1.0-alpha"
 edition = "2024"
+authors = ["Seceda Studios <hello@secedastudios.com>"]
 license = "Apache-2.0"
 description = "Open-source film distribution and white-label streaming platform"
 repository = "https://github.com/secedastudios/pavilion"
+homepage = "https://pavilion.film"
+keywords = ["video", "streaming", "film", "distribution", "ott"]
+categories = ["multimedia::video", "web-programming"]
 
 [dependencies]
 pavilion-media = { path = "crates/pavilion-media" }

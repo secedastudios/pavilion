@@ -3424,7 +3424,7 @@ checksum = "17359afc20d7ab31fdb42bb844c8b3bb1dabd7dcf7e68428492da7f16966fcef"
 
 [[package]]
 name = "pavilion"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "anyhow",
  "argon2",
@@ -3460,7 +3460,7 @@ dependencies = [
 
 [[package]]
 name = "pavilion-media"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "anyhow",
  "async-trait",

@@ -19,6 +19,10 @@
 
 ---
 
+> **Status: 0.1.0-alpha** — Pavilion is under active development. The core platform works (auth, films, licensing, transcoding, secure delivery, payments, ratings, events, admin — 121 passing tests), but some features are still being wired together. We're using it internally and looking for early feedback. Expect rough edges. If you want to try it or contribute, [open an issue](https://github.com/secedastudios/pavilion/issues).
+
+---
+
 We built Pavilion because the options for indie filmmakers are bad. Aggregators take 30% and give you a quarterly PDF. White-label platforms charge per subscriber and cap your bandwidth. Building on AWS means your CloudFront bill eats your ticket sales.
 
 Pavilion is self-hosted. You run it on a dedicated server with flat-rate bandwidth, keep 100% of your revenue, and see every transaction as it happens. Curators get white-label streaming sites they can launch in hours. The whole thing is Apache 2.0.
@@ -51,6 +55,8 @@ Pavilion is self-hosted. You run it on a dedicated server with flat-rate bandwid
 A screening for 1,000 viewers costs about $425 on CloudFront just in bandwidth. On a Hetzner box running Pavilion, that's $0 — bandwidth is part of the monthly rate.
 
 The math is simple: AWS charges per gigabyte, one 1080p viewer burns 5 GB, and it adds up fast. Dedicated servers from [Hetzner](https://www.hetzner.com) (from ~€44/month) or [OVH](https://www.ovhcloud.com) (~$70/month) include 20 TB+ at full speed.
+
+These numbers are just one example. Pavilion runs fine on a single machine — database, storage, transcoding, and the web server all on one box — which is plenty for a small catalog and a few hundred concurrent viewers. If you need more, split the services across machines: dedicate a box to transcoding, cluster the database, add more web servers behind a load balancer. The architecture scales from a $44/month single server to a multi-node production setup without changing any code.
 
 ---
 
@@ -98,7 +104,50 @@ Storage is never public. No direct URLs. No way around it.
 
 ---
 
-## Designed for Performance & Scalability?
+## Under the hood
+
+### Adaptive bitrate streaming
+
+When a film is uploaded, Pavilion transcodes it into six renditions using FFmpeg:
+
+| Rendition | Resolution | Bitrate | Typical use |
+|---|---|---|---|
+| 360p | 640×360 | 800 kbps | Mobile on slow connections |
+| 480p | 854×480 | 1.4 Mbps | Mobile on decent connections |
+| 720p | 1280×720 | 2.8 Mbps | Tablets, small screens |
+| 1080p | 1920×1080 | 5 Mbps | Laptops, desktops |
+| 1440p | 2560×1440 | 10 Mbps | Large monitors |
+| 2160p | 3840×2160 | 16 Mbps | 4K displays |
+
+Output format is CMAF (Common Media Application Format) — fMP4 segments that work with both HLS and DASH. One set of segments, two manifest formats. No duplicate storage.
+
+The player (HLS.js on non-Safari, native HLS on Safari) picks the right rendition based on the viewer's bandwidth and switches mid-stream if conditions change. A viewer on a train watching on their phone gets 480p. The same viewer at home on fiber gets 4K. Same URL, same segments.
+
+### Transcoding pipeline
+
+Transcode jobs live in a SurrealDB-backed queue. Workers claim jobs atomically (SELECT + UPDATE with a WHERE guard to prevent double-claims), send heartbeats every 30 seconds, and get reaped if they go silent for 5 minutes. Failed jobs retry up to 3 times before being marked permanently failed. Workers scale independently — run one on a dev machine, ten on a render farm.
+
+The full pipeline: download the master from RustFS → transcode all renditions → generate HLS and DASH manifests → upload everything back to RustFS → create asset records in SurrealDB.
+
+### Storage
+
+All video files (masters, segments, manifests, posters) live in RustFS, an S3-compatible object storage server. RustFS is open source (Apache 2.0), written in Rust, and supports distributed mode with erasure coding for redundancy.
+
+Pavilion never exposes storage URLs to the client. Every segment is served through a proxy that validates a signed token before fetching from RustFS. The tokens are HMAC-SHA256 signed, contain the viewer's identity, and expire in 5 minutes.
+
+Poster images are automatically processed into 4 sizes on upload (92×138 thumbnail, 185×278 small, 370×556 medium, 780×1170 large) so templates can pick the right one for the context.
+
+### Database
+
+SurrealDB v3 with a graph-first data model. Relationships between people, films, platforms, licenses, and ratings are all graph edges (`RELATE person->filmmaker_of->film`), which means ownership checks and rights resolution are single-hop traversals instead of multi-table joins.
+
+All tables are `SCHEMAFULL` with field-level type assertions and unique indexes. The schema is idempotent (`IF NOT EXISTS` on every definition) so you can re-run `make db-init` safely.
+
+For clustering, SurrealDB uses TiKV as the storage backend. In dev, it runs single-node with SurrealKV (embedded).
+
+---
+
+## Designed for performance and scalability
 
 Streaming video is one of the hardest things to do efficiently on a web server. Every concurrent viewer is sustained bandwidth, CPU work for manifest rewriting, and I/O for segment delivery. Language choice matters here more than most places.
 
