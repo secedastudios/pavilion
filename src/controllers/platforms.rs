@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use askama::Template;
+use axum::Form;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Redirect, Response};
-use axum::Form;
 use serde::Deserialize;
 use surrealdb::types::RecordId;
 
@@ -134,7 +134,8 @@ pub async fn create(
         })
         .await?;
 
-    let platform = platform.ok_or_else(|| AppError::Internal(anyhow::anyhow!("Failed to create platform")))?;
+    let platform =
+        platform.ok_or_else(|| AppError::Internal(anyhow::anyhow!("Failed to create platform")))?;
 
     // Create curator_of relation
     state
@@ -181,9 +182,11 @@ pub async fn edit(
     let platform = get_platform(&state, &id).await?;
     require_curator(&state, &claims, &platform).await?;
 
-    let html = PlatformEditTemplate { platform: platform.into() }
-        .render()
-        .map_err(|e| AppError::Internal(anyhow::anyhow!("Template error: {e}")))?;
+    let html = PlatformEditTemplate {
+        platform: platform.into(),
+    }
+    .render()
+    .map_err(|e| AppError::Internal(anyhow::anyhow!("Template error: {e}")))?;
     Ok(sse::fragment("#platform-detail", html).into_response())
 }
 
@@ -211,20 +214,28 @@ pub async fn update(
                 description = $description, \
                 monetization_model = $monetization, \
                 theme = $theme \
-             RETURN AFTER"
+             RETURN AFTER",
         )
         .bind(("pid", platform_id))
         .bind(("name", form.name.trim().to_string()))
-        .bind(("description", form.description.filter(|s| !s.trim().is_empty())))
-        .bind(("monetization", form.monetization_model.filter(|s| !s.trim().is_empty())))
+        .bind((
+            "description",
+            form.description.filter(|s| !s.trim().is_empty()),
+        ))
+        .bind((
+            "monetization",
+            form.monetization_model.filter(|s| !s.trim().is_empty()),
+        ))
         .bind(("theme", theme))
         .await?
         .take(0)?;
 
     let platform = updated.ok_or(AppError::NotFound)?;
-    let html = PlatformInfoTemplate { platform: platform.into() }
-        .render()
-        .map_err(|e| AppError::Internal(anyhow::anyhow!("Template error: {e}")))?;
+    let html = PlatformInfoTemplate {
+        platform: platform.into(),
+    }
+    .render()
+    .map_err(|e| AppError::Internal(anyhow::anyhow!("Template error: {e}")))?;
     Ok(sse::fragment("#platform-detail", html).into_response())
 }
 
@@ -237,7 +248,11 @@ pub async fn activate(
     require_curator(&state, &claims, &platform).await?;
 
     let pid = RecordId::new("platform", id.as_str());
-    state.db.query("UPDATE $pid SET status = 'active'").bind(("pid", pid)).await?;
+    state
+        .db
+        .query("UPDATE $pid SET status = 'active'")
+        .bind(("pid", pid))
+        .await?;
 
     Ok(Redirect::to(&format!("/platforms/{id}")).into_response())
 }
@@ -324,7 +339,9 @@ pub async fn public_home(
         .await?
         .take(0)?;
 
-    let theme_css = platform.theme.as_ref()
+    let theme_css = platform
+        .theme
+        .as_ref()
         .map(|t| t.to_css_overrides())
         .unwrap_or_default();
 
@@ -366,7 +383,9 @@ pub async fn public_film(
         return Err(AppError::NotFound);
     }
 
-    let theme_css = platform.theme.as_ref()
+    let theme_css = platform
+        .theme
+        .as_ref()
         .map(|t| t.to_css_overrides())
         .unwrap_or_default();
 
@@ -395,11 +414,19 @@ async fn get_platform_by_slug(state: &AppState, slug: &str) -> Result<Platform, 
     platforms.into_iter().next().ok_or(AppError::NotFound)
 }
 
-pub async fn require_curator_public(state: &AppState, claims: &Claims, platform: &Platform) -> Result<(), AppError> {
+pub async fn require_curator_public(
+    state: &AppState,
+    claims: &Claims,
+    platform: &Platform,
+) -> Result<(), AppError> {
     require_curator(state, claims, platform).await
 }
 
-async fn require_curator(state: &AppState, claims: &Claims, platform: &Platform) -> Result<(), AppError> {
+async fn require_curator(
+    state: &AppState,
+    claims: &Claims,
+    platform: &Platform,
+) -> Result<(), AppError> {
     let person_id = claims.person_id();
     let result: Vec<serde_json::Value> = state
         .db

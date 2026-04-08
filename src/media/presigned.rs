@@ -65,11 +65,7 @@ impl UppyConfig {
             endpoint: format!("{base_url}/films/{film_id}/poster"),
             film_id: film_id.to_string(),
             max_file_size_mb: 50,
-            allowed_types: vec![
-                "image/jpeg".into(),
-                "image/png".into(),
-                "image/webp".into(),
-            ],
+            allowed_types: vec!["image/jpeg".into(), "image/png".into(), "image/webp".into()],
         }
     }
 }

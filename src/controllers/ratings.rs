@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use askama::Template;
+use axum::Form;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
-use axum::Form;
 use serde::Deserialize;
 use surrealdb::types::RecordId;
 
@@ -47,7 +47,8 @@ pub async fn list_ratings(
 
     let ratings = get_platform_ratings(&state, &film_record, &platform.id).await?;
     let stats = get_platform_stats(&state, &film_record, &platform.id).await?;
-    let user_rating = get_user_rating(&state, &claims.person_id(), &film_record, &platform.id).await?;
+    let user_rating =
+        get_user_rating(&state, &claims.person_id(), &film_record, &platform.id).await?;
 
     let html = RatingsTemplate {
         ratings: ratings.into_iter().map(RatingView::from).collect(),
@@ -71,12 +72,34 @@ pub async fn submit_rating(
     Form(form): Form<RatingForm>,
 ) -> Result<Response, AppError> {
     if !(1..=5).contains(&form.score) {
-        return Err(AppError::Validation("Score must be between 1 and 5.".into()));
+        return Err(AppError::Validation(
+            "Score must be between 1 and 5.".into(),
+        ));
     }
 
     let platform = get_platform_by_slug(&state, &platform_slug).await?;
     let film_record = RecordId::new("film", film_id.as_str());
     let person_id = claims.person_id();
+
+    // Verify the person has watched this film on this platform
+    let has_watched: Vec<serde_json::Value> = state
+        .db
+        .query(
+            "SELECT id FROM watch_session \
+             WHERE person = $person AND film = $film AND platform = $platform LIMIT 1",
+        )
+        .bind(("person", person_id.clone()))
+        .bind(("film", film_record.clone()))
+        .bind(("platform", platform.id.clone()))
+        .await?
+        .take(0)?;
+
+    if has_watched.is_empty() {
+        return Err(AppError::Validation(
+            "You must watch this film before rating it.".into(),
+        ));
+    }
+
     let review = form.review_text.filter(|t| !t.trim().is_empty());
 
     // Upsert: update if exists, create if not
@@ -119,7 +142,9 @@ pub async fn delete_rating(
 
     state
         .db
-        .query("DELETE FROM rating WHERE person = $person AND film = $film AND platform = $platform")
+        .query(
+            "DELETE FROM rating WHERE person = $person AND film = $film AND platform = $platform",
+        )
         .bind(("person", claims.person_id()))
         .bind(("film", film_record))
         .bind(("platform", platform.id))
@@ -156,7 +181,7 @@ pub async fn aggregate_stats(
         .db
         .query(
             "SELECT math::mean(score) AS average, count() AS count \
-             FROM rating WHERE film = $film_id AND hidden = false"
+             FROM rating WHERE film = $film_id AND hidden = false",
         )
         .bind(("film_id", film_id.clone()))
         .await?
@@ -189,7 +214,7 @@ async fn get_platform_ratings(
         .query(
             "SELECT * FROM rating \
              WHERE film = $film AND platform = $platform AND hidden = false \
-             ORDER BY created_at DESC LIMIT 50"
+             ORDER BY created_at DESC LIMIT 50",
         )
         .bind(("film", film_id.clone()))
         .bind(("platform", platform_id.clone()))
@@ -224,7 +249,7 @@ async fn get_user_rating(
         .db
         .query(
             "SELECT * FROM rating \
-             WHERE person = $person AND film = $film AND platform = $platform LIMIT 1"
+             WHERE person = $person AND film = $film AND platform = $platform LIMIT 1",
         )
         .bind(("person", person_id.clone()))
         .bind(("film", film_id.clone()))

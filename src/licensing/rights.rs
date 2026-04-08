@@ -31,7 +31,7 @@ pub async fn resolve_available_films(
                AND in.active = true \
                AND ($territory IN in.territories OR array::len(in.territories) = 0) \
                AND (in.window_start IS NONE OR in.window_start <= time::now()) \
-               AND (in.window_end IS NONE OR in.window_end >= time::now())"
+               AND (in.window_end IS NONE OR in.window_end >= time::now())",
         )
         .bind(("territory", territory.to_string()))
         .await?
@@ -53,7 +53,7 @@ pub async fn film_is_licensed_for(
                AND in.active = true \
                AND ($territory IN in.territories OR array::len(in.territories) = 0) \
                AND (in.window_start IS NONE OR in.window_start <= time::now()) \
-               AND (in.window_end IS NONE OR in.window_end >= time::now())"
+               AND (in.window_end IS NONE OR in.window_end >= time::now())",
         )
         .bind(("film_id", film_id.clone()))
         .bind(("territory", territory.to_string()))
@@ -64,10 +64,7 @@ pub async fn film_is_licensed_for(
 }
 
 /// Check if a film has any active license at all (regardless of territory).
-pub async fn film_has_any_license(
-    db: &Db,
-    film_id: &RecordId,
-) -> Result<bool, surrealdb::Error> {
+pub async fn film_has_any_license(db: &Db, film_id: &RecordId) -> Result<bool, surrealdb::Error> {
     // licensed_via: FROM film TO license — in=film, out=license
     let count: Vec<serde_json::Value> = db
         .query(
@@ -76,7 +73,7 @@ pub async fn film_has_any_license(
                AND out.active = true \
                AND (out.window_start IS NONE OR out.window_start <= time::now()) \
                AND (out.window_end IS NONE OR out.window_end >= time::now()) \
-             LIMIT 1"
+             LIMIT 1",
         )
         .bind(("film_id", film_id.clone()))
         .await?

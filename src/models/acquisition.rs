@@ -2,19 +2,31 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use surrealdb::types::{RecordId, SurrealValue};
 
+/// A request by a platform or person to acquire distribution rights to a [`Film`](super::film::Film)
+/// under a specific [`License`](super::license::License).
+///
+/// Status flow: `"pending"` -> `"approved"` | `"rejected"`.
 #[derive(Debug, Serialize, Deserialize, SurrealValue, Clone)]
 pub struct Acquisition {
     pub id: RecordId,
+    /// The film being acquired.
     pub film: RecordId,
+    /// The license governing the terms of acquisition.
     pub license: RecordId,
+    /// The platform requesting the film (if platform-initiated).
     pub platform: Option<RecordId>,
+    /// The person who submitted the acquisition request.
     pub requester: RecordId,
+    /// Workflow status: `"pending"`, `"approved"`, or `"rejected"`.
     pub status: String,
     pub requested_at: DateTime<Utc>,
+    /// When the filmmaker or admin resolved the request.
     pub resolved_at: Option<DateTime<Utc>>,
+    /// The person who approved or rejected the request.
     pub resolved_by: Option<RecordId>,
 }
 
+/// Payload for creating a new [`Acquisition`] request.
 #[derive(Debug, Serialize, Deserialize, SurrealValue)]
 pub struct CreateAcquisition {
     pub film: RecordId,
@@ -24,6 +36,9 @@ pub struct CreateAcquisition {
     pub status: String,
 }
 
+/// Template-safe projection of [`Acquisition`] with string keys for all `RecordId` references.
+///
+/// Excludes `resolved_by` and provides `*_key_str` fields for URL construction in templates.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AcquisitionView {
     pub id: RecordId,

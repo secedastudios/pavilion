@@ -2,29 +2,52 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use surrealdb::types::{RecordId, SurrealValue};
 
+/// A background job that transcodes a [`Film`](super::film::Film)'s source video
+/// into adaptive-bitrate renditions.
+///
+/// Status flow: `"queued"` -> `"processing"` -> `"completed"` | `"failed"`.
+/// Failed jobs are automatically retried up to `max_retries` times.
 #[derive(Debug, Serialize, Deserialize, SurrealValue, Clone)]
 pub struct TranscodeJob {
     pub id: RecordId,
+    /// The film whose source video is being transcoded.
     pub film: RecordId,
+    /// Job status: `"queued"`, `"processing"`, `"completed"`, or `"failed"`.
     pub status: String,
+    /// Identifier of the worker process that claimed this job.
     pub worker_id: Option<String>,
+    /// Codec, resolution, and format settings for the transcode.
     pub profile: Option<TranscodeProfile>,
+    /// Completion percentage (0-100).
     pub progress_pct: i64,
+    /// Error message from the most recent failure, if any.
     pub error_msg: Option<String>,
+    /// How many times this job has been retried after failure.
     pub retry_count: i64,
+    /// Maximum retry attempts before the job is marked permanently failed.
     pub max_retries: i64,
     pub created_at: DateTime<Utc>,
+    /// When a worker claimed the job for processing.
     pub claimed_at: Option<DateTime<Utc>>,
+    /// When the job finished (successfully or after final failure).
     pub completed_at: Option<DateTime<Utc>>,
 }
 
+/// Configuration for a transcode job specifying the target codec, resolutions,
+/// and container format.
+///
+/// Use [`TranscodeProfile::h264_default`] for the standard adaptive-bitrate ladder.
 #[derive(Debug, Serialize, Deserialize, SurrealValue, Clone)]
 pub struct TranscodeProfile {
+    /// Video codec, e.g. `"h264"`, `"h265"`, `"av1"`.
     pub codec: Option<String>,
+    /// Target resolution labels, e.g. `["360p", "720p", "1080p"]`.
     pub resolutions: Option<Vec<String>>,
+    /// Container/packaging format, e.g. `"cmaf"`, `"hls"`, `"dash"`.
     pub format: Option<String>,
 }
 
+/// Payload for creating a new [`TranscodeJob`].
 #[derive(Debug, Serialize, Deserialize, SurrealValue)]
 pub struct CreateTranscodeJob {
     pub film: RecordId,
@@ -33,7 +56,9 @@ pub struct CreateTranscodeJob {
     pub max_retries: i64,
 }
 
-/// View for templates — includes key_str for URL rendering.
+/// Template-safe projection of [`TranscodeJob`] with string keys for URL rendering.
+///
+/// Excludes `worker_id` and `profile` (internal implementation details).
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TranscodeJobView {
     pub id: RecordId,

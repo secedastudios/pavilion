@@ -23,7 +23,7 @@ pub async fn log_access(
                 platform = $platform, \
                 action = $action, \
                 result = $result, \
-                reason = $reason"
+                reason = $reason",
         )
         .bind(("person", person))
         .bind(("film", film))

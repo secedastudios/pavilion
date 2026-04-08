@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use askama::Template;
+use axum::Form;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Redirect, Response};
-use axum::Form;
 use serde::Deserialize;
 use surrealdb::types::{RecordId, SurrealValue};
 
@@ -71,9 +71,16 @@ pub async fn dashboard(
     let person_count = count_table(&state, "person").await;
     let film_count = count_table(&state, "film").await;
     let platform_count = count_table(&state, "platform").await;
-    let pending_dmca = count_where(&state, "dmca_claim", "status IN ['filed', 'under_review']").await;
-    let active_streams = count_where(&state, "watch_session", "last_heartbeat > time::now() - 5m").await;
-    let queued_jobs = count_where(&state, "transcode_job", "status IN ['queued', 'claimed', 'processing']").await;
+    let pending_dmca =
+        count_where(&state, "dmca_claim", "status IN ['filed', 'under_review']").await;
+    let active_streams =
+        count_where(&state, "watch_session", "last_heartbeat > time::now() - 5m").await;
+    let queued_jobs = count_where(
+        &state,
+        "transcode_job",
+        "status IN ['queued', 'claimed', 'processing']",
+    )
+    .await;
 
     render_or_error(&AdminDashboardTemplate {
         person_count,
@@ -91,20 +98,22 @@ pub async fn persons(
 ) -> Result<Response, AppError> {
     require_admin(&claims)?;
 
-    let persons: Vec<Person> = state.db
+    let persons: Vec<Person> = state
+        .db
         .query("SELECT * FROM person ORDER BY created_at DESC LIMIT 100")
         .await?
         .take(0)?;
 
-    let views: Vec<AdminPersonView> = persons.into_iter().map(|p| {
-        AdminPersonView {
+    let views: Vec<AdminPersonView> = persons
+        .into_iter()
+        .map(|p| AdminPersonView {
             key_str: crate::util::record_id_key_string(&p.id.key),
             email: p.email,
             name: p.name,
             roles: p.roles,
             status: "active".into(),
-        }
-    }).collect();
+        })
+        .collect();
 
     render_or_error(&AdminPersonsTemplate { persons: views })
 }
@@ -122,14 +131,16 @@ pub async fn update_roles(
 ) -> Result<Response, AppError> {
     require_admin(&claims)?;
 
-    let roles: Vec<String> = form.roles
+    let roles: Vec<String> = form
+        .roles
         .split(',')
         .map(|r| r.trim().to_string())
         .filter(|r| !r.is_empty())
         .collect();
 
     let pid = RecordId::new("person", person_id.as_str());
-    state.db
+    state
+        .db
         .query("UPDATE $pid SET roles = $roles")
         .bind(("pid", pid))
         .bind(("roles", roles))
@@ -144,7 +155,8 @@ pub async fn dmca_list(
 ) -> Result<Response, AppError> {
     require_admin(&claims)?;
 
-    let dmca_claims: Vec<DmcaClaim> = state.db
+    let dmca_claims: Vec<DmcaClaim> = state
+        .db
         .query("SELECT * FROM dmca_claim ORDER BY filed_at DESC LIMIT 100")
         .await?
         .take(0)?;
@@ -180,13 +192,19 @@ pub async fn gdpr_export(
     Ok((
         axum::http::StatusCode::OK,
         [
-            (axum::http::header::CONTENT_TYPE, "application/json".to_string()),
-            (axum::http::header::CONTENT_DISPOSITION,
-             format!("attachment; filename=\"gdpr-export-{person_id}.json\"")),
+            (
+                axum::http::header::CONTENT_TYPE,
+                "application/json".to_string(),
+            ),
+            (
+                axum::http::header::CONTENT_DISPOSITION,
+                format!("attachment; filename=\"gdpr-export-{person_id}.json\""),
+            ),
         ],
         serde_json::to_string_pretty(&export)
             .map_err(|e| AppError::Internal(anyhow::anyhow!("JSON error: {e}")))?,
-    ).into_response())
+    )
+        .into_response())
 }
 
 /// GDPR: delete a person and all their data.
@@ -199,8 +217,10 @@ pub async fn gdpr_delete(
 
     let pid = RecordId::new("person", person_id.as_str());
 
-    state.db.query(
-        "DELETE FROM agreed_to WHERE in = $pid; \
+    state
+        .db
+        .query(
+            "DELETE FROM agreed_to WHERE in = $pid; \
          DELETE FROM filmmaker_of WHERE in = $pid; \
          DELETE FROM curator_of WHERE in = $pid; \
          DELETE FROM attending WHERE in = $pid; \
@@ -211,10 +231,10 @@ pub async fn gdpr_delete(
          DELETE FROM credit_balance WHERE person = $pid; \
          DELETE FROM credit_transaction WHERE person = $pid; \
          DELETE FROM storage_usage WHERE person = $pid; \
-         DELETE $pid;"
-    )
-    .bind(("pid", pid))
-    .await?;
+         DELETE $pid;",
+        )
+        .bind(("pid", pid))
+        .await?;
 
     tracing::info!(person = %person_id, "GDPR erasure completed by admin");
     Ok(Redirect::to("/admin/persons").into_response())
@@ -222,20 +242,57 @@ pub async fn gdpr_delete(
 
 // ── Helpers ────────────────────────────────────────────────
 
-async fn count_table(state: &AppState, table: &str) -> i64 {
-    #[derive(Deserialize, SurrealValue)]
-    struct C { count: Option<i64> }
+/// Tables allowed in dynamic count queries. Prevents SurrealQL injection
+/// if these helpers are ever called with non-hardcoded values.
+const ALLOWED_TABLES: &[&str] = &[
+    "person",
+    "film",
+    "platform",
+    "dmca_claim",
+    "watch_session",
+    "transcode_job",
+];
 
-    let q = format!("SELECT count() AS count FROM {table}");
-    let rows: Result<Vec<C>, _> = state.db.query(&q).await.and_then(|mut r| r.take(0));
-    rows.ok().and_then(|r| r.into_iter().next()).and_then(|r| r.count).unwrap_or(0)
+async fn count_table(state: &AppState, table: &str) -> i64 {
+    debug_assert!(
+        ALLOWED_TABLES.contains(&table),
+        "count_table called with unknown table: {table}"
+    );
+    if !ALLOWED_TABLES.contains(&table) {
+        return 0;
+    }
+
+    #[derive(Deserialize, SurrealValue)]
+    struct C {
+        count: Option<i64>,
+    }
+
+    let query = format!("SELECT count() AS count FROM {table}");
+    let rows: Result<Vec<C>, _> = state.db.query(&query).await.and_then(|mut r| r.take(0));
+    rows.ok()
+        .and_then(|r| r.into_iter().next())
+        .and_then(|r| r.count)
+        .unwrap_or(0)
 }
 
 async fn count_where(state: &AppState, table: &str, condition: &str) -> i64 {
-    #[derive(Deserialize, SurrealValue)]
-    struct C { count: Option<i64> }
+    debug_assert!(
+        ALLOWED_TABLES.contains(&table),
+        "count_where called with unknown table: {table}"
+    );
+    if !ALLOWED_TABLES.contains(&table) {
+        return 0;
+    }
 
-    let q = format!("SELECT count() AS count FROM {table} WHERE {condition}");
-    let rows: Result<Vec<C>, _> = state.db.query(&q).await.and_then(|mut r| r.take(0));
-    rows.ok().and_then(|r| r.into_iter().next()).and_then(|r| r.count).unwrap_or(0)
+    #[derive(Deserialize, SurrealValue)]
+    struct C {
+        count: Option<i64>,
+    }
+
+    let query = format!("SELECT count() AS count FROM {table} WHERE {condition}");
+    let rows: Result<Vec<C>, _> = state.db.query(&query).await.and_then(|mut r| r.take(0));
+    rows.ok()
+        .and_then(|r| r.into_iter().next())
+        .and_then(|r| r.count)
+        .unwrap_or(0)
 }

@@ -115,27 +115,44 @@ impl PaymentProvider for StripeProvider {
         ];
 
         for (i, item) in params.line_items.iter().enumerate() {
-            form.push((&leak(format!("line_items[{i}][price_data][currency]")), item.currency.clone()));
-            form.push((&leak(format!("line_items[{i}][price_data][unit_amount]")), item.amount_cents.to_string()));
-            form.push((&leak(format!("line_items[{i}][price_data][product_data][name]")), item.name.clone()));
-            form.push((&leak(format!("line_items[{i}][quantity]")), item.quantity.to_string()));
+            form.push((
+                leak(format!("line_items[{i}][price_data][currency]")),
+                item.currency.clone(),
+            ));
+            form.push((
+                leak(format!("line_items[{i}][price_data][unit_amount]")),
+                item.amount_cents.to_string(),
+            ));
+            form.push((
+                leak(format!("line_items[{i}][price_data][product_data][name]")),
+                item.name.clone(),
+            ));
+            form.push((
+                leak(format!("line_items[{i}][quantity]")),
+                item.quantity.to_string(),
+            ));
         }
 
         for (key, val) in &params.metadata {
-            form.push((&leak(format!("metadata[{key}]")), val.clone()));
+            form.push((leak(format!("metadata[{key}]")), val.clone()));
         }
 
         if params.application_fee_pct > 0.0 {
-            let total: i64 = params.line_items.iter().map(|i| i.amount_cents * i.quantity).sum();
+            let total: i64 = params
+                .line_items
+                .iter()
+                .map(|i| i.amount_cents * i.quantity)
+                .sum();
             let fee = ((total as f64) * params.application_fee_pct / 100.0).round() as i64;
-            form.push(("payment_intent_data[application_fee_amount]", fee.to_string()));
+            form.push((
+                "payment_intent_data[application_fee_amount]",
+                fee.to_string(),
+            ));
         }
 
         let form_refs: Vec<(&str, &str)> = form.iter().map(|(k, v)| (*k, v.as_str())).collect();
 
-        let session = self
-            .stripe_post("/checkout/sessions", &form_refs)
-            .await?;
+        let session = self.stripe_post("/checkout/sessions", &form_refs).await?;
 
         let session_id = session["id"].as_str().unwrap_or_default().to_string();
         let checkout_url = session["url"].as_str().unwrap_or_default().to_string();
@@ -164,7 +181,9 @@ impl PaymentProvider for StripeProvider {
         }
 
         if timestamp.is_empty() || sig_v1.is_empty() {
-            return Err(PaymentError::InvalidWebhook("Missing signature components".into()));
+            return Err(PaymentError::InvalidWebhook(
+                "Missing signature components".into(),
+            ));
         }
 
         // Compute expected signature
@@ -198,7 +217,10 @@ fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     if a.len() != b.len() {
         return false;
     }
-    a.iter().zip(b.iter()).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
+    a.iter()
+        .zip(b.iter())
+        .fold(0u8, |acc, (x, y)| acc | (x ^ y))
+        == 0
 }
 
 /// Leak a string to get a &'static str for form fields.

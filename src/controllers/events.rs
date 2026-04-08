@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use askama::Template;
+use axum::Form;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Redirect, Response};
-use axum::Form;
 use serde::Deserialize;
 use surrealdb::types::RecordId;
 
@@ -66,10 +66,12 @@ pub async fn index(
     crate::controllers::platforms::require_curator_public(&state, &claims, &platform).await?;
 
     let pid = RecordId::new("platform", platform_id.as_str());
-    let events: Vec<Event> = state.db
+    let events: Vec<Event> = state
+        .db
         .query("SELECT * FROM event WHERE platform = $pid ORDER BY start_time DESC")
         .bind(("pid", pid))
-        .await?.take(0)?;
+        .await?
+        .take(0)?;
 
     let mut views = Vec::new();
     for e in events {
@@ -121,7 +123,9 @@ pub async fn create(
         .map(|dt| dt.with_timezone(&chrono::Utc))
         .map_err(|_| AppError::Validation("Invalid start time format.".into()))?;
 
-    let end_time = form.end_time.as_deref()
+    let end_time = form
+        .end_time
+        .as_deref()
         .filter(|s| !s.is_empty())
         .and_then(|s| {
             chrono::DateTime::parse_from_rfc3339(&format!("{s}:00Z"))
@@ -130,16 +134,21 @@ pub async fn create(
                 .ok()
         });
 
-    let max_attendees: Option<i64> = form.max_attendees.as_deref()
+    let max_attendees: Option<i64> = form
+        .max_attendees
+        .as_deref()
         .filter(|s| !s.is_empty())
         .and_then(|s| s.parse().ok());
 
-    let ticket_price_cents: Option<i64> = form.ticket_price.as_deref()
+    let ticket_price_cents: Option<i64> = form
+        .ticket_price
+        .as_deref()
         .filter(|s| !s.is_empty())
         .and_then(|s| s.parse::<f64>().ok())
         .map(|v| (v * 100.0).round() as i64);
 
-    let event: Option<Event> = state.db
+    let event: Option<Event> = state
+        .db
         .create("event")
         .content(CreateEvent {
             title: form.title.trim().to_string(),
@@ -155,7 +164,8 @@ pub async fn create(
         })
         .await?;
 
-    let event = event.ok_or_else(|| AppError::Internal(anyhow::anyhow!("Failed to create event")))?;
+    let event =
+        event.ok_or_else(|| AppError::Internal(anyhow::anyhow!("Failed to create event")))?;
     let key = crate::util::record_id_key_string(&event.id.key);
     Ok(Redirect::to(&format!("/events/{key}")).into_response())
 }
@@ -178,9 +188,12 @@ pub async fn detail(
         let platform = crate::controllers::platforms::get_platform(
             &state,
             &crate::util::record_id_key_string(&event.platform.key),
-        ).await;
+        )
+        .await;
         match platform {
-            Ok(p) => crate::controllers::platforms::require_curator_public(&state, c, &p).await.is_ok(),
+            Ok(p) => crate::controllers::platforms::require_curator_public(&state, c, &p)
+                .await
+                .is_ok(),
             Err(_) => false,
         }
     } else {
@@ -204,7 +217,9 @@ pub async fn purchase_ticket(
     let event = get_event(&state, &event_id).await?;
 
     if event.status != "upcoming" && event.status != "live" {
-        return Err(AppError::Validation("This event is no longer accepting attendees.".into()));
+        return Err(AppError::Validation(
+            "This event is no longer accepting attendees.".into(),
+        ));
     }
 
     // Check attendee cap
@@ -217,13 +232,16 @@ pub async fn purchase_ticket(
 
     // Check if already attending
     if is_person_attending(&state, &claims.person_id(), &event.id).await {
-        return Err(AppError::Validation("You are already registered for this event.".into()));
+        return Err(AppError::Validation(
+            "You are already registered for this event.".into(),
+        ));
     }
 
     // TODO: If ticket_price_cents > 0, route through payment flow (Phase 9)
     // For now, create the attendance record directly (free events or deferred payment)
     let ticket_id = uuid::Uuid::now_v7().to_string();
-    state.db
+    state
+        .db
         .query("RELATE $person->attending->$event SET ticket_id = $ticket_id")
         .bind(("person", claims.person_id()))
         .bind(("event", event.id))
@@ -252,12 +270,14 @@ pub async fn update_status(
 
     if !valid {
         return Err(AppError::Validation(format!(
-            "Cannot transition from '{}' to '{}'.", event.status, form.status
+            "Cannot transition from '{}' to '{}'.",
+            event.status, form.status
         )));
     }
 
     let eid = RecordId::new("event", event_id.as_str());
-    state.db
+    state
+        .db
         .query("UPDATE $eid SET status = $status")
         .bind(("eid", eid))
         .bind(("status", form.status))
@@ -282,9 +302,12 @@ async fn get_event(state: &AppState, id: &str) -> Result<Event, AppError> {
 async fn attendee_count(state: &AppState, event_id: &RecordId) -> i64 {
     use surrealdb::types::SurrealValue;
     #[derive(serde::Deserialize, SurrealValue)]
-    struct CountRow { count: Option<i64> }
+    struct CountRow {
+        count: Option<i64>,
+    }
 
-    let rows: Result<Vec<CountRow>, _> = state.db
+    let rows: Result<Vec<CountRow>, _> = state
+        .db
         .query("SELECT count() AS count FROM attending WHERE out = $event")
         .bind(("event", event_id.clone()))
         .await
@@ -297,7 +320,8 @@ async fn attendee_count(state: &AppState, event_id: &RecordId) -> i64 {
 }
 
 async fn is_person_attending(state: &AppState, person_id: &RecordId, event_id: &RecordId) -> bool {
-    let result: Result<Vec<serde_json::Value>, _> = state.db
+    let result: Result<Vec<serde_json::Value>, _> = state
+        .db
         .query("SELECT id FROM attending WHERE in = $person AND out = $event LIMIT 1")
         .bind(("person", person_id.clone()))
         .bind(("event", event_id.clone()))

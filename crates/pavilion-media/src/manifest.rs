@@ -17,7 +17,9 @@ pub fn rewrite_hls_manifest(
             if trimmed.starts_with('#') || trimmed.is_empty() {
                 line.to_string()
             } else {
-                sign_segment_url(subject, resource, scope, trimmed, secret, ttl_secs, url_prefix)
+                sign_segment_url(
+                    subject, resource, scope, trimmed, secret, ttl_secs, url_prefix,
+                )
             }
         })
         .collect::<Vec<_>>()
@@ -49,19 +51,18 @@ pub fn rewrite_dash_manifest(
                 result = result.replace(trimmed, &format!("<BaseURL>{signed}</BaseURL>"));
             }
         }
-        if trimmed.contains("sourceURL=\"") {
-            if let Some(start) = trimmed.find("sourceURL=\"") {
-                let after = &trimmed[start + 11..];
-                if let Some(end) = after.find('"') {
-                    let path = &after[..end];
-                    let signed = sign_segment_url(
-                        subject, resource, scope, path, secret, ttl_secs, url_prefix,
-                    );
-                    result = result.replace(
-                        &format!("sourceURL=\"{path}\""),
-                        &format!("sourceURL=\"{signed}\""),
-                    );
-                }
+        if trimmed.contains("sourceURL=\"")
+            && let Some(start) = trimmed.find("sourceURL=\"")
+        {
+            let after = &trimmed[start + 11..];
+            if let Some(end) = after.find('"') {
+                let path = &after[..end];
+                let signed =
+                    sign_segment_url(subject, resource, scope, path, secret, ttl_secs, url_prefix);
+                result = result.replace(
+                    &format!("sourceURL=\"{path}\""),
+                    &format!("sourceURL=\"{signed}\""),
+                );
             }
         }
     }
@@ -71,10 +72,7 @@ pub fn rewrite_dash_manifest(
 
 /// Generate an HLS master playlist (.m3u8) that references rendition playlists.
 pub fn generate_hls_master(renditions: &[RenditionInfo], base_url: &str) -> String {
-    let mut lines = vec![
-        "#EXTM3U".to_string(),
-        "#EXT-X-VERSION:7".to_string(),
-    ];
+    let mut lines = vec!["#EXTM3U".to_string(), "#EXT-X-VERSION:7".to_string()];
 
     for r in renditions {
         lines.push(format!(

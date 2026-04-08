@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use askama::Template;
+use axum::Form;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Redirect, Response};
-use axum::Form;
 use serde::Deserialize;
 
 use crate::auth::claims::Claims;
@@ -122,7 +122,7 @@ pub async fn create(
     }
 
     let title = form.title.trim().to_string();
-    let slug = slugify(&title);
+    let slug = crate::util::slugify(&title);
 
     // Check slug uniqueness
     let existing: Vec<Film> = state
@@ -138,11 +138,15 @@ pub async fn create(
         });
     }
 
-    let year: Option<i64> = form.year.as_deref()
+    let year: Option<i64> = form
+        .year
+        .as_deref()
         .filter(|y| !y.is_empty())
         .and_then(|y| y.parse().ok());
 
-    let genres: Vec<String> = form.genres.as_deref()
+    let genres: Vec<String> = form
+        .genres
+        .as_deref()
         .unwrap_or("")
         .split(',')
         .map(|g| g.trim().to_string())
@@ -227,11 +231,15 @@ pub async fn update(
         return Err(AppError::Validation("Title cannot be empty.".into()));
     }
 
-    let year: Option<i64> = form.year.as_deref()
+    let year: Option<i64> = form
+        .year
+        .as_deref()
         .filter(|y| !y.is_empty())
         .and_then(|y| y.parse().ok());
 
-    let genres: Vec<String> = form.genres.as_deref()
+    let genres: Vec<String> = form
+        .genres
+        .as_deref()
         .unwrap_or("")
         .split(',')
         .map(|g| g.trim().to_string())
@@ -248,7 +256,7 @@ pub async fn update(
                 genres = $genres, \
                 language = $language, \
                 country = $country \
-             RETURN AFTER"
+             RETURN AFTER",
         )
         .bind(("film_id", film.id.clone()))
         .bind(("title", form.title.trim().to_string()))
@@ -356,26 +364,11 @@ pub async fn require_film_ownership(
     }
 }
 
-async fn require_ownership(
-    state: &AppState,
-    claims: &Claims,
-    film: &Film,
-) -> Result<(), AppError> {
+async fn require_ownership(state: &AppState, claims: &Claims, film: &Film) -> Result<(), AppError> {
     require_film_ownership(state, claims, film).await
 }
 
+/// Re-export slugify for use by other controllers (e.g., platforms).
 pub fn slugify_public(title: &str) -> String {
-    slugify(title)
-}
-
-fn slugify(title: &str) -> String {
-    title
-        .to_lowercase()
-        .chars()
-        .map(|c| if c.is_alphanumeric() { c } else { '-' })
-        .collect::<String>()
-        .split('-')
-        .filter(|s| !s.is_empty())
-        .collect::<Vec<_>>()
-        .join("-")
+    crate::util::slugify(title)
 }

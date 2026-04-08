@@ -105,7 +105,11 @@ impl TmdbClient {
     }
 
     /// Search TMDB for movies matching a query.
-    pub async fn search(&self, query: &str, year: Option<i64>) -> anyhow::Result<Vec<TmdbSearchResult>> {
+    pub async fn search(
+        &self,
+        query: &str,
+        year: Option<i64>,
+    ) -> anyhow::Result<Vec<TmdbSearchResult>> {
         let mut url = format!(
             "https://api.themoviedb.org/3/search/movie?api_key={}&query={}",
             self.api_key,
@@ -116,9 +120,8 @@ impl TmdbClient {
         }
 
         let resp: serde_json::Value = self.client.get(&url).send().await?.json().await?;
-        let results: Vec<TmdbSearchResult> = serde_json::from_value(
-            resp.get("results").cloned().unwrap_or_default()
-        )?;
+        let results: Vec<TmdbSearchResult> =
+            serde_json::from_value(resp.get("results").cloned().unwrap_or_default())?;
 
         Ok(results)
     }
@@ -155,11 +158,15 @@ impl TmdbClient {
         let detail = self.get_movie(tmdb_id).await?;
         let credits = self.get_credits(tmdb_id).await?;
 
-        let year = detail.release_date.as_deref()
+        let year = detail
+            .release_date
+            .as_deref()
             .and_then(|d| d.split('-').next())
             .and_then(|y| y.parse().ok());
 
-        let poster_url = detail.poster_path.as_ref()
+        let poster_url = detail
+            .poster_path
+            .as_ref()
             .map(|p| format!("https://image.tmdb.org/t/p/w780{p}"));
 
         Ok(EnrichmentData {
@@ -172,7 +179,10 @@ impl TmdbClient {
             runtime_minutes: detail.runtime,
             genres: detail.genres.into_iter().map(|g| g.name).collect(),
             country: detail.production_countries.first().map(|c| c.name.clone()),
-            language: detail.spoken_languages.first().map(|l| l.english_name.clone()),
+            language: detail
+                .spoken_languages
+                .first()
+                .map(|l| l.english_name.clone()),
             poster_url,
             cast: credits.cast,
             crew: credits.crew,
@@ -189,16 +199,17 @@ impl TmdbClient {
             self.api_key
         );
         let resp: serde_json::Value = self.client.get(&url).send().await?.json().await?;
-        let results = resp.get("movie_results")
+        let results = resp
+            .get("movie_results")
             .and_then(|r| r.as_array())
             .cloned()
             .unwrap_or_default();
 
-        if let Some(first) = results.first() {
-            if let Some(tmdb_id) = first.get("id").and_then(|i| i.as_i64()) {
-                let data = self.enrich(tmdb_id).await?;
-                return Ok(Some(data));
-            }
+        if let Some(first) = results.first()
+            && let Some(tmdb_id) = first.get("id").and_then(|i| i.as_i64())
+        {
+            let data = self.enrich(tmdb_id).await?;
+            return Ok(Some(data));
         }
         Ok(None)
     }

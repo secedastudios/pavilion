@@ -5,6 +5,9 @@ members = [".", "crates/pavilion-media"]
 name = "pavilion"
 version = "0.1.0"
 edition = "2024"
+license = "Apache-2.0"
+description = "Open-source film distribution and white-label streaming platform"
+repository = "https://github.com/secedastudios/pavilion"
 
 [dependencies]
 pavilion-media = { path = "crates/pavilion-media" }

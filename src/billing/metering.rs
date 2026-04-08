@@ -35,15 +35,16 @@ pub async fn get_usage(db: &Db, person_id: &RecordId) -> Result<StorageUsage, su
         .query(
             "CREATE storage_usage SET person = $person, total_bytes = 0, \
              master_bytes = 0, rendition_bytes = 0, asset_count = 0, film_count = 0 \
-             RETURN AFTER"
+             RETURN AFTER",
         )
         .bind(("person", person_id.clone()))
         .await?
         .take(0)?;
 
-    created.into_iter().next().ok_or_else(|| {
-        surrealdb::Error::thrown("Failed to create storage usage record".into())
-    })
+    created
+        .into_iter()
+        .next()
+        .ok_or_else(|| surrealdb::Error::thrown("Failed to create storage usage record".into()))
 }
 
 /// Record a file upload (adds to totals).
@@ -53,7 +54,11 @@ pub async fn record_upload(
     size_bytes: i64,
     is_master: bool,
 ) -> Result<(), surrealdb::Error> {
-    let field = if is_master { "master_bytes" } else { "rendition_bytes" };
+    let field = if is_master {
+        "master_bytes"
+    } else {
+        "rendition_bytes"
+    };
     let query = format!(
         "UPDATE storage_usage SET \
             total_bytes += $size, \
@@ -77,7 +82,11 @@ pub async fn record_deletion(
     size_bytes: i64,
     is_master: bool,
 ) -> Result<(), surrealdb::Error> {
-    let field = if is_master { "master_bytes" } else { "rendition_bytes" };
+    let field = if is_master {
+        "master_bytes"
+    } else {
+        "rendition_bytes"
+    };
     let query = format!(
         "UPDATE storage_usage SET \
             total_bytes -= $size, \
@@ -95,10 +104,7 @@ pub async fn record_deletion(
 }
 
 /// Increment the film count for a person.
-pub async fn increment_film_count(
-    db: &Db,
-    person_id: &RecordId,
-) -> Result<(), surrealdb::Error> {
+pub async fn increment_film_count(db: &Db, person_id: &RecordId) -> Result<(), surrealdb::Error> {
     db.query("UPDATE storage_usage SET film_count += 1 WHERE person = $person")
         .bind(("person", person_id.clone()))
         .await?;

@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use askama::Template;
+use axum::Form;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Redirect, Response};
-use axum::Form;
 use serde::Deserialize;
 use surrealdb::types::RecordId;
 
@@ -58,7 +58,9 @@ pub async fn acquire(
     let license = license.ok_or(AppError::NotFound)?;
 
     if !license.active {
-        return Err(AppError::Validation("This license is no longer active.".into()));
+        return Err(AppError::Validation(
+            "This license is no longer active.".into(),
+        ));
     }
 
     // Check for existing pending/approved acquisition
@@ -68,7 +70,7 @@ pub async fn acquire(
             "SELECT * FROM acquisition \
              WHERE film = $film_id AND license = $license_id AND requester = $requester \
                AND status IN ['pending', 'approved'] \
-             LIMIT 1"
+             LIMIT 1",
         )
         .bind(("film_id", RecordId::new("film", film_id.as_str())))
         .bind(("license_id", license_record.clone()))
@@ -126,7 +128,7 @@ pub async fn film_requests(
         .query(
             "SELECT * FROM acquisition \
              WHERE film = $film_id \
-             ORDER BY requested_at DESC"
+             ORDER BY requested_at DESC",
         )
         .bind(("film_id", RecordId::new("film", film_id.as_str())))
         .await?
@@ -158,7 +160,7 @@ pub async fn approve_request(
                 status = 'approved', \
                 resolved_at = time::now(), \
                 resolved_by = $person_id \
-             WHERE status = 'pending'"
+             WHERE status = 'pending'",
         )
         .bind(("acq_id", acq_id))
         .bind(("person_id", claims.person_id()))
@@ -184,7 +186,7 @@ pub async fn reject_request(
                 status = 'rejected', \
                 resolved_at = time::now(), \
                 resolved_by = $person_id \
-             WHERE status = 'pending'"
+             WHERE status = 'pending'",
         )
         .bind(("acq_id", acq_id))
         .bind(("person_id", claims.person_id()))

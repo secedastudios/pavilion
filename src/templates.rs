@@ -5,22 +5,7 @@
 //! or an `AppError` on failure.
 
 use askama::Template;
-use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse, Response};
-
-/// Render an Askama template into an Axum HTML response.
-///
-/// On render failure, returns a 500 error response directly (no `AppError`).
-/// Use [`render_or_error`] instead when you need the `?` operator.
-pub fn render(template: &impl Template) -> Result<Response, Response> {
-    match template.render() {
-        Ok(html) => Ok(Html(html).into_response()),
-        Err(err) => {
-            tracing::error!(error = %err, "Template render error");
-            Err((StatusCode::INTERNAL_SERVER_ERROR, "Template error").into_response())
-        }
-    }
-}
 
 /// Render a template, returning [`AppError`](crate::error::AppError) on failure.
 ///

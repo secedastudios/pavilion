@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use askama::Template;
-use axum::extract::State;
-use axum::http::header::SET_COOKIE;
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Redirect, Response};
 use axum::Form;
+use axum::extract::State;
+use axum::http::StatusCode;
+use axum::http::header::SET_COOKIE;
+use axum::response::{IntoResponse, Redirect, Response};
 use serde::Deserialize;
 
 use crate::auth::claims::issue_token;
@@ -56,9 +56,7 @@ pub struct LoginForm {
 
 // ── Handlers ───────────────────────────────────────────────
 
-pub async fn register_page(
-    OptionalClaims(claims): OptionalClaims,
-) -> Result<Response, AppError> {
+pub async fn register_page(OptionalClaims(claims): OptionalClaims) -> Result<Response, AppError> {
     if claims.is_some() {
         return Ok(Redirect::to("/profile").into_response());
     }
@@ -76,7 +74,9 @@ pub async fn register_submit(
         || form.accept_talent.is_none()
     {
         return render_or_error(&RegisterTemplate {
-            error: Some("You must accept all terms and content policy checkboxes to register.".into()),
+            error: Some(
+                "You must accept all terms and content policy checkboxes to register.".into(),
+            ),
         });
     }
 
@@ -135,7 +135,8 @@ pub async fn register_submit(
         })
         .await?;
 
-    let person = person.ok_or_else(|| AppError::Internal(anyhow::anyhow!("Failed to create person")))?;
+    let person =
+        person.ok_or_else(|| AppError::Internal(anyhow::anyhow!("Failed to create person")))?;
 
     // Issue JWT
     let key = crate::util::record_id_key_string(&person.id.key);
@@ -145,9 +146,7 @@ pub async fn register_submit(
     Ok(set_token_cookie_and_redirect(&token, "/profile"))
 }
 
-pub async fn login_page(
-    OptionalClaims(claims): OptionalClaims,
-) -> Result<Response, AppError> {
+pub async fn login_page(OptionalClaims(claims): OptionalClaims) -> Result<Response, AppError> {
     if claims.is_some() {
         return Ok(Redirect::to("/profile").into_response());
     }
@@ -195,7 +194,7 @@ pub async fn logout() -> impl IntoResponse {
     (
         StatusCode::SEE_OTHER,
         [
-            (SET_COOKIE, "pavilion_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax".to_string()),
+            (SET_COOKIE, clear_token_cookie()),
             (axum::http::header::LOCATION, "/login".to_string()),
         ],
     )
@@ -204,19 +203,33 @@ pub async fn logout() -> impl IntoResponse {
 // ── SlateHub OAuth stubs ───────────────────────────────────
 
 pub async fn slatehub_oauth_start() -> impl IntoResponse {
-    (StatusCode::NOT_IMPLEMENTED, "SlateHub OAuth not yet available")
+    (
+        StatusCode::NOT_IMPLEMENTED,
+        "SlateHub OAuth not yet available",
+    )
 }
 
 pub async fn slatehub_oauth_callback() -> impl IntoResponse {
-    (StatusCode::NOT_IMPLEMENTED, "SlateHub OAuth not yet available")
+    (
+        StatusCode::NOT_IMPLEMENTED,
+        "SlateHub OAuth not yet available",
+    )
 }
 
 // ── Helpers ────────────────────────────────────────────────
 
 fn set_token_cookie_and_redirect(token: &str, location: &str) -> Response {
-    let cookie = format!(
-        "pavilion_token={token}; Path=/; Max-Age=86400; HttpOnly; SameSite=Lax"
-    );
+    // Add Secure flag when running behind HTTPS
+    let secure = if std::env::var("BASE_URL")
+        .unwrap_or_default()
+        .starts_with("https://")
+    {
+        "; Secure"
+    } else {
+        ""
+    };
+    let cookie =
+        format!("pavilion_token={token}; Path=/; Max-Age=86400; HttpOnly; SameSite=Lax{secure}");
     (
         StatusCode::SEE_OTHER,
         [
@@ -225,4 +238,17 @@ fn set_token_cookie_and_redirect(token: &str, location: &str) -> Response {
         ],
     )
         .into_response()
+}
+
+/// Build a Set-Cookie header that clears the auth token.
+pub fn clear_token_cookie() -> String {
+    let secure = if std::env::var("BASE_URL")
+        .unwrap_or_default()
+        .starts_with("https://")
+    {
+        "; Secure"
+    } else {
+        ""
+    };
+    format!("pavilion_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax{secure}")
 }

@@ -49,7 +49,11 @@ fn person_mismatch_detected() {
 async fn build_app() -> axum::Router {
     let db = common::setup_test_db().await;
     let config = common::test_config();
-    router::build_router(AppState { db, config, storage: common::test_storage() })
+    router::build_router(AppState {
+        db,
+        config,
+        storage: common::test_storage(),
+    })
 }
 
 async fn body_string(response: axum::http::Response<Body>) -> String {
@@ -73,8 +77,15 @@ async fn register_person(app: &mut axum::Router, email: &str) -> String {
         )
         .await
         .unwrap();
-    resp.headers().get("set-cookie").unwrap().to_str().unwrap()
-        .split(';').next().unwrap().to_string()
+    resp.headers()
+        .get("set-cookie")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .split(';')
+        .next()
+        .unwrap()
+        .to_string()
 }
 
 /// Set up a full chain: filmmaker creates film, publishes, adds license,
@@ -88,67 +99,104 @@ async fn setup_full_chain(app: &mut axum::Router) -> (String, String, String, St
     let body = "title=Watchable+Film&synopsis=Great&year=2026&genres=Drama\
         &language=English&country=UK\
         &declare_copyright=yes&declare_talent=yes&declare_no_prohibited=yes";
-    let resp = app.clone().oneshot(
-        Request::post("/films")
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &fm_cookie)
-            .body(Body::from(body))
-            .unwrap(),
-    ).await.unwrap();
-    let film_url = resp.headers().get("location").unwrap().to_str().unwrap().to_string();
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::post("/films")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &fm_cookie)
+                .body(Body::from(body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let film_url = resp
+        .headers()
+        .get("location")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
     let film_id = film_url.strip_prefix("/films/").unwrap().to_string();
 
     // Publish
-    app.clone().oneshot(
-        Request::post(&format!("/films/{film_id}/status"))
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &fm_cookie)
-            .body(Body::from("status=published"))
-            .unwrap(),
-    ).await.unwrap();
+    app.clone()
+        .oneshot(
+            Request::post(&format!("/films/{film_id}/status"))
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &fm_cookie)
+                .body(Body::from("status=published"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
 
     // Add AVOD license
-    app.clone().oneshot(
-        Request::post(&format!("/films/{film_id}/licenses"))
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &fm_cookie)
-            .body(Body::from("license_type=avod&revenue_share_pct=60"))
-            .unwrap(),
-    ).await.unwrap();
+    app.clone()
+        .oneshot(
+            Request::post(&format!("/films/{film_id}/licenses"))
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &fm_cookie)
+                .body(Body::from("license_type=avod&revenue_share_pct=60"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
 
     // Curator
     let cu_cookie = register_person(app, "curator@test.com").await;
 
     // Create platform
-    let resp = app.clone().oneshot(
-        Request::post("/platforms")
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &cu_cookie)
-            .body(Body::from("name=Watch+Channel&description=Test"))
-            .unwrap(),
-    ).await.unwrap();
-    let plat_url = resp.headers().get("location").unwrap().to_str().unwrap().to_string();
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::post("/platforms")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &cu_cookie)
+                .body(Body::from("name=Watch+Channel&description=Test"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let plat_url = resp
+        .headers()
+        .get("location")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
     let plat_id = plat_url.strip_prefix("/platforms/").unwrap().to_string();
 
     // Activate
-    app.clone().oneshot(
-        Request::post(&format!("/platforms/{plat_id}/activate"))
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &cu_cookie)
-            .body(Body::empty())
-            .unwrap(),
-    ).await.unwrap();
+    app.clone()
+        .oneshot(
+            Request::post(&format!("/platforms/{plat_id}/activate"))
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &cu_cookie)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
 
     // Add film to platform
-    app.clone().oneshot(
-        Request::post(&format!("/platforms/{plat_id}/content"))
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &cu_cookie)
-            .body(Body::from(format!("film_id={film_id}")))
-            .unwrap(),
-    ).await.unwrap();
+    app.clone()
+        .oneshot(
+            Request::post(&format!("/platforms/{plat_id}/content"))
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &cu_cookie)
+                .body(Body::from(format!("film_id={film_id}")))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
 
-    (fm_cookie, cu_cookie, "watch-channel".to_string(), "watchable-film".to_string())
+    (
+        fm_cookie,
+        cu_cookie,
+        "watch-channel".to_string(),
+        "watchable-film".to_string(),
+    )
 }
 
 #[tokio::test]
@@ -229,7 +277,10 @@ async fn hls_manifest_returns_signed_urls() {
     for line in body.lines() {
         let trimmed = line.trim();
         if !trimmed.starts_with('#') && !trimmed.is_empty() {
-            assert!(trimmed.starts_with("/segments/"), "Unsigned segment URL: {trimmed}");
+            assert!(
+                trimmed.starts_with("/segments/"),
+                "Unsigned segment URL: {trimmed}"
+            );
         }
     }
 }
@@ -242,10 +293,12 @@ async fn manifest_denies_uncarried_film() {
     // Try to access a different film slug that doesn't exist
     let resp = app
         .oneshot(
-            Request::get(&format!("/watch/{plat_slug}/nonexistent-film/manifest.m3u8"))
-                .header("cookie", &fm)
-                .body(Body::empty())
-                .unwrap(),
+            Request::get(&format!(
+                "/watch/{plat_slug}/nonexistent-film/manifest.m3u8"
+            ))
+            .header("cookie", &fm)
+            .body(Body::empty())
+            .unwrap(),
         )
         .await
         .unwrap();

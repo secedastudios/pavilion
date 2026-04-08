@@ -63,7 +63,8 @@ async fn register_page_returns_200() {
 async fn register_without_terms_fails() {
     let app = build_app().await;
 
-    let body = "email=test%40example.com&name=Test&password=password123&password_confirm=password123";
+    let body =
+        "email=test%40example.com&name=Test&password=password123&password_confirm=password123";
     let response = app
         .oneshot(
             Request::post("/register")
@@ -139,10 +140,20 @@ async fn register_success_sets_cookie_and_redirects() {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::SEE_OTHER);
-    let location = response.headers().get("location").unwrap().to_str().unwrap();
+    let location = response
+        .headers()
+        .get("location")
+        .unwrap()
+        .to_str()
+        .unwrap();
     assert_eq!(location, "/profile");
 
-    let cookie = response.headers().get("set-cookie").unwrap().to_str().unwrap();
+    let cookie = response
+        .headers()
+        .get("set-cookie")
+        .unwrap()
+        .to_str()
+        .unwrap();
     assert!(cookie.starts_with("pavilion_token="));
 }
 
@@ -201,7 +212,11 @@ async fn settings_privacy_without_auth_returns_unauthorized() {
     let app = build_app().await;
 
     let response = app
-        .oneshot(Request::get("/settings/privacy").body(Body::empty()).unwrap())
+        .oneshot(
+            Request::get("/settings/privacy")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
 
@@ -213,7 +228,11 @@ async fn data_export_without_auth_returns_unauthorized() {
     let app = build_app().await;
 
     let response = app
-        .oneshot(Request::get("/settings/data-export").body(Body::empty()).unwrap())
+        .oneshot(
+            Request::get("/settings/data-export")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
 
@@ -269,7 +288,11 @@ async fn content_policy_page_returns_200() {
 async fn build_app() -> axum::Router {
     let db = common::setup_test_db().await;
     let config = common::test_config();
-    router::build_router(AppState { db, config, storage: common::test_storage() })
+    router::build_router(AppState {
+        db,
+        config,
+        storage: common::test_storage(),
+    })
 }
 
 async fn body_string(response: axum::http::Response<Body>) -> String {

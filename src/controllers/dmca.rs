@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use askama::Template;
+use axum::Form;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Redirect, Response};
-use axum::Form;
 use serde::Deserialize;
 use surrealdb::types::RecordId;
 
@@ -56,9 +56,7 @@ pub struct CounterForm {
 
 // ── Public handlers (no login required) ────────────────────
 
-pub async fn dmca_form(
-    OptionalClaims(_claims): OptionalClaims,
-) -> Result<Response, AppError> {
+pub async fn dmca_form(OptionalClaims(_claims): OptionalClaims) -> Result<Response, AppError> {
     render_or_error(&DmcaFormTemplate {
         error: None,
         success: false,
@@ -86,7 +84,9 @@ pub async fn submit_claim(
 
     if form.good_faith.is_none() || form.perjury.is_none() {
         return render_or_error(&DmcaFormTemplate {
-            error: Some("You must confirm the good faith statement and perjury declaration.".into()),
+            error: Some(
+                "You must confirm the good faith statement and perjury declaration.".into(),
+            ),
             success: false,
         });
     }
@@ -188,7 +188,7 @@ pub async fn review_claim(
                 .db
                 .query(
                     "UPDATE $cid SET status = 'upheld', admin_notes = $notes, \
-                     reviewed_at = time::now()"
+                     reviewed_at = time::now()",
                 )
                 .bind(("cid", cid))
                 .bind(("notes", form.notes))
@@ -199,7 +199,7 @@ pub async fn review_claim(
                 .db
                 .query(
                     "UPDATE $cid SET status = 'rejected', admin_notes = $notes, \
-                     reviewed_at = time::now(), resolved_at = time::now()"
+                     reviewed_at = time::now(), resolved_at = time::now()",
                 )
                 .bind(("cid", cid))
                 .bind(("notes", form.notes))
@@ -210,7 +210,7 @@ pub async fn review_claim(
                 .db
                 .query(
                     "UPDATE $cid SET status = 'resolved', admin_notes = $notes, \
-                     resolved_at = time::now()"
+                     resolved_at = time::now()",
                 )
                 .bind(("cid", cid))
                 .bind(("notes", form.notes))

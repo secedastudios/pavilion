@@ -12,7 +12,11 @@ use pavilion::router::{self, AppState};
 async fn build_app() -> axum::Router {
     let db = common::setup_test_db().await;
     let config = common::test_config();
-    router::build_router(AppState { db, config, storage: common::test_storage() })
+    router::build_router(AppState {
+        db,
+        config,
+        storage: common::test_storage(),
+    })
 }
 
 async fn body_string(response: axum::http::Response<Body>) -> String {
@@ -26,13 +30,25 @@ async fn register_person(app: &mut axum::Router, email: &str) -> String {
          &accept_terms=yes&accept_no_porn=yes&accept_copyright=yes&accept_talent=yes",
         email.replace('@', "%40")
     );
-    let resp = app.clone().oneshot(
-        Request::post("/register")
-            .header("content-type", "application/x-www-form-urlencoded")
-            .body(Body::from(body)).unwrap(),
-    ).await.unwrap();
-    resp.headers().get("set-cookie").unwrap().to_str().unwrap()
-        .split(';').next().unwrap().to_string()
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::post("/register")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .body(Body::from(body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    resp.headers()
+        .get("set-cookie")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .split(';')
+        .next()
+        .unwrap()
+        .to_string()
 }
 
 // ── Entitlement unit tests ─────────────────────────────────
@@ -44,7 +60,9 @@ async fn free_license_grants_access_without_entitlement() {
     let film = RecordId::new("film", "film1");
     let platform = RecordId::new("platform", "plat1");
 
-    let result = entitlements::check_entitlement(&db, &person, &film, &platform, "avod").await.unwrap();
+    let result = entitlements::check_entitlement(&db, &person, &film, &platform, "avod")
+        .await
+        .unwrap();
     assert_eq!(result, Some("free_access".to_string()));
 }
 
@@ -55,7 +73,9 @@ async fn cc_license_grants_access_without_entitlement() {
     let film = RecordId::new("film", "film1");
     let platform = RecordId::new("platform", "plat1");
 
-    let result = entitlements::check_entitlement(&db, &person, &film, &platform, "cc").await.unwrap();
+    let result = entitlements::check_entitlement(&db, &person, &film, &platform, "cc")
+        .await
+        .unwrap();
     assert_eq!(result, Some("free_access".to_string()));
 }
 
@@ -66,7 +86,9 @@ async fn tvod_requires_entitlement() {
     let film = RecordId::new("film", "film1");
     let platform = RecordId::new("platform", "plat1");
 
-    let result = entitlements::check_entitlement(&db, &person, &film, &platform, "tvod").await.unwrap();
+    let result = entitlements::check_entitlement(&db, &person, &film, &platform, "tvod")
+        .await
+        .unwrap();
     assert_eq!(result, None); // No entitlement = no access
 }
 
@@ -78,11 +100,20 @@ async fn purchase_entitlement_grants_access() {
     let platform = RecordId::new("platform", "plat1");
 
     entitlements::grant_entitlement(
-        &db, person.clone(), film.clone(), platform.clone(),
-        "purchase", None, None,
-    ).await.unwrap();
+        &db,
+        person.clone(),
+        film.clone(),
+        platform.clone(),
+        "purchase",
+        None,
+        None,
+    )
+    .await
+    .unwrap();
 
-    let result = entitlements::check_entitlement(&db, &person, &film, &platform, "tvod").await.unwrap();
+    let result = entitlements::check_entitlement(&db, &person, &film, &platform, "tvod")
+        .await
+        .unwrap();
     assert_eq!(result, Some("purchase".to_string()));
 }
 
@@ -95,11 +126,20 @@ async fn rental_entitlement_with_future_expiry_grants_access() {
 
     let expires = chrono::Utc::now() + chrono::Duration::hours(48);
     entitlements::grant_entitlement(
-        &db, person.clone(), film.clone(), platform.clone(),
-        "rental", Some(expires), None,
-    ).await.unwrap();
+        &db,
+        person.clone(),
+        film.clone(),
+        platform.clone(),
+        "rental",
+        Some(expires),
+        None,
+    )
+    .await
+    .unwrap();
 
-    let result = entitlements::check_entitlement(&db, &person, &film, &platform, "tvod").await.unwrap();
+    let result = entitlements::check_entitlement(&db, &person, &film, &platform, "tvod")
+        .await
+        .unwrap();
     assert_eq!(result, Some("rental".to_string()));
 }
 
@@ -111,20 +151,36 @@ async fn payment_settings_without_stripe_shows_disabled() {
     let cookie = register_person(&mut app, "curator@test.com").await;
 
     // Create platform
-    let resp = app.clone().oneshot(
-        Request::post("/platforms")
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &cookie)
-            .body(Body::from("name=Pay+Channel")).unwrap(),
-    ).await.unwrap();
-    let plat_id = resp.headers().get("location").unwrap().to_str().unwrap()
-        .strip_prefix("/platforms/").unwrap().to_string();
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::post("/platforms")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &cookie)
+                .body(Body::from("name=Pay+Channel"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let plat_id = resp
+        .headers()
+        .get("location")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .strip_prefix("/platforms/")
+        .unwrap()
+        .to_string();
 
-    let resp = app.oneshot(
-        Request::get(&format!("/platforms/{plat_id}/payments"))
-            .header("cookie", &cookie)
-            .body(Body::empty()).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .oneshot(
+            Request::get(&format!("/platforms/{plat_id}/payments"))
+                .header("cookie", &cookie)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
 
     assert_eq!(resp.status(), StatusCode::OK);
     let html = body_string(resp).await;
@@ -136,12 +192,18 @@ async fn checkout_without_stripe_shows_disabled() {
     let mut app = build_app().await;
     let cookie = register_person(&mut app, "viewer@test.com").await;
 
-    let resp = app.oneshot(
-        Request::post("/p/any-platform/checkout")
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &cookie)
-            .body(Body::from("film_id=test&checkout_type=rental&amount_cents=399")).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .oneshot(
+            Request::post("/p/any-platform/checkout")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &cookie)
+                .body(Body::from(
+                    "film_id=test&checkout_type=rental&amount_cents=399",
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
 
     assert_eq!(resp.status(), StatusCode::OK);
     let html = body_string(resp).await;
@@ -152,11 +214,15 @@ async fn checkout_without_stripe_shows_disabled() {
 async fn webhook_without_signature_fails() {
     let app = build_app().await;
 
-    let resp = app.oneshot(
-        Request::post("/webhooks/stripe")
-            .header("content-type", "application/json")
-            .body(Body::from("{}")).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .oneshot(
+            Request::post("/webhooks/stripe")
+                .header("content-type", "application/json")
+                .body(Body::from("{}"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
 
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }

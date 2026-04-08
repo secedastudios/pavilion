@@ -4,17 +4,17 @@
 
 use std::io::Cursor;
 
-use image::imageops::FilterType;
 use image::ImageFormat;
+use image::imageops::FilterType;
 
 use pavilion_media::storage::StorageClient;
 
 /// Poster size variants.
 pub struct PosterSizes {
-    pub thumb: Vec<u8>,   // 92x138
-    pub small: Vec<u8>,   // 185x278
-    pub medium: Vec<u8>,  // 370x556
-    pub large: Vec<u8>,   // 780x1170
+    pub thumb: Vec<u8>,  // 92x138
+    pub small: Vec<u8>,  // 185x278
+    pub medium: Vec<u8>, // 370x556
+    pub large: Vec<u8>,  // 780x1170
 }
 
 /// Process a poster image: validate, resize to multiple sizes, return all variants.
@@ -58,13 +58,21 @@ pub async fn upload_poster_variants(
     let medium_key = format!("{base}/medium.jpg");
     let large_key = format!("{base}/large.jpg");
 
-    storage.put_bytes(&thumb_key, &sizes.thumb, Some("image/jpeg")).await
+    storage
+        .put_bytes(&thumb_key, &sizes.thumb, Some("image/jpeg"))
+        .await
         .map_err(|e| anyhow::anyhow!("Upload thumb: {e}"))?;
-    storage.put_bytes(&small_key, &sizes.small, Some("image/jpeg")).await
+    storage
+        .put_bytes(&small_key, &sizes.small, Some("image/jpeg"))
+        .await
         .map_err(|e| anyhow::anyhow!("Upload small: {e}"))?;
-    storage.put_bytes(&medium_key, &sizes.medium, Some("image/jpeg")).await
+    storage
+        .put_bytes(&medium_key, &sizes.medium, Some("image/jpeg"))
+        .await
         .map_err(|e| anyhow::anyhow!("Upload medium: {e}"))?;
-    storage.put_bytes(&large_key, &sizes.large, Some("image/jpeg")).await
+    storage
+        .put_bytes(&large_key, &sizes.large, Some("image/jpeg"))
+        .await
         .map_err(|e| anyhow::anyhow!("Upload large: {e}"))?;
 
     tracing::info!(film = %film_key, "Uploaded 4 poster variants");

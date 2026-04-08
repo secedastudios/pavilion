@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use askama::Template;
+use axum::Form;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Redirect, Response};
-use axum::Form;
 use serde::Deserialize;
 use surrealdb::types::RecordId;
 
@@ -128,13 +128,10 @@ pub async fn create(
         });
     }
 
-    let license: Option<License> = state
-        .db
-        .create("license")
-        .content(create_license)
-        .await?;
+    let license: Option<License> = state.db.create("license").content(create_license).await?;
 
-    let license = license.ok_or_else(|| AppError::Internal(anyhow::anyhow!("Failed to create license")))?;
+    let license =
+        license.ok_or_else(|| AppError::Internal(anyhow::anyhow!("Failed to create license")))?;
 
     // Create the licensed_via relation
     let film_record = RecordId::new("film", film_id.as_str());
@@ -202,7 +199,7 @@ pub async fn update(
                 institution_types = $institution_types, \
                 pricing_tier = $pricing_tier, \
                 cc_license_type = $cc_license_type \
-             RETURN AFTER"
+             RETURN AFTER",
         )
         .bind(("lid", lid))
         .bind(("license_type", create.license_type))
@@ -269,11 +266,15 @@ fn parse_cents(s: &Option<String>) -> Option<i64> {
 }
 
 fn parse_f64(s: &Option<String>) -> Option<f64> {
-    s.as_deref().filter(|v| !v.is_empty()).and_then(|v| v.parse().ok())
+    s.as_deref()
+        .filter(|v| !v.is_empty())
+        .and_then(|v| v.parse().ok())
 }
 
 fn parse_i64(s: &Option<String>) -> Option<i64> {
-    s.as_deref().filter(|v| !v.is_empty()).and_then(|v| v.parse().ok())
+    s.as_deref()
+        .filter(|v| !v.is_empty())
+        .and_then(|v| v.parse().ok())
 }
 
 fn parse_datetime(s: &Option<String>) -> Option<chrono::DateTime<chrono::Utc>> {
@@ -284,16 +285,25 @@ fn parse_datetime(s: &Option<String>) -> Option<chrono::DateTime<chrono::Utc>> {
 }
 
 fn form_to_create_license(form: &LicenseForm) -> CreateLicense {
-    let territories: Vec<String> = form.territories.as_deref()
+    let territories: Vec<String> = form
+        .territories
+        .as_deref()
         .unwrap_or("")
         .split(',')
         .map(|t| t.trim().to_uppercase())
         .filter(|t| !t.is_empty())
         .collect();
 
-    let institution_types: Option<Vec<String>> = form.institution_types.as_deref()
+    let institution_types: Option<Vec<String>> = form
+        .institution_types
+        .as_deref()
         .filter(|v| !v.is_empty())
-        .map(|v| v.split(',').map(|t| t.trim().to_string()).filter(|t| !t.is_empty()).collect());
+        .map(|v| {
+            v.split(',')
+                .map(|t| t.trim().to_string())
+                .filter(|t| !t.is_empty())
+                .collect()
+        });
 
     CreateLicense {
         license_type: form.license_type.clone(),

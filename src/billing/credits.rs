@@ -59,7 +59,7 @@ pub async fn add_credits(
     db.query(
         "CREATE credit_transaction SET \
             person = $person, amount_cents = $amount, \
-            transaction_type = 'purchase', description = $desc"
+            transaction_type = 'purchase', description = $desc",
     )
     .bind(("person", person_id.clone()))
     .bind(("amount", amount_cents))
@@ -78,7 +78,8 @@ pub async fn deduct_credits(
     amount_cents: i64,
     description: &str,
 ) -> Result<i64, AppError> {
-    let balance = get_balance(db, person_id).await
+    let balance = get_balance(db, person_id)
+        .await
         .map_err(|e| AppError::Internal(anyhow::anyhow!("Credit balance error: {e}")))?;
 
     if balance < amount_cents {
@@ -97,7 +98,7 @@ pub async fn deduct_credits(
     db.query(
         "CREATE credit_transaction SET \
             person = $person, amount_cents = $amount, \
-            transaction_type = 'deduction', description = $desc"
+            transaction_type = 'deduction', description = $desc",
     )
     .bind(("person", person_id.clone()))
     .bind(("amount", amount_cents))

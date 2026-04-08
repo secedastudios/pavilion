@@ -55,7 +55,7 @@ pub async fn filmmaker_revenue(
     let totals: Vec<TotalRow> = db
         .query(
             "SELECT math::sum(amount_cents) AS total, count() AS count \
-             FROM revenue_split WHERE recipient = $person AND role = 'filmmaker'"
+             FROM revenue_split WHERE recipient = $person AND role = 'filmmaker'",
         )
         .bind(("person", person_id.clone()))
         .await?
@@ -114,7 +114,7 @@ pub async fn platform_revenue(
     let totals: Vec<TotalRow> = db
         .query(
             "SELECT math::sum(amount_cents) AS total, count() AS count \
-             FROM transaction WHERE platform = $platform AND status = 'completed'"
+             FROM transaction WHERE platform = $platform AND status = 'completed'",
         )
         .bind(("platform", platform_id.clone()))
         .await?
@@ -131,7 +131,7 @@ pub async fn platform_revenue(
         .query(
             "SELECT math::sum(amount_cents) AS total, count() AS count \
              FROM revenue_split WHERE role = 'curator' \
-               AND transaction.platform = $platform"
+               AND transaction.platform = $platform",
         )
         .bind(("platform", platform_id.clone()))
         .await?
@@ -152,7 +152,7 @@ pub async fn platform_revenue(
     let subs: Vec<CountRow> = db
         .query(
             "SELECT count() AS count FROM viewer_subscription \
-             WHERE platform = $platform AND status = 'active'"
+             WHERE platform = $platform AND status = 'active'",
         )
         .bind(("platform", platform_id.clone()))
         .await?
@@ -162,9 +162,7 @@ pub async fn platform_revenue(
 
     // Total views
     let views: Vec<CountRow> = db
-        .query(
-            "SELECT count() AS count FROM watch_session WHERE platform = $platform"
-        )
+        .query("SELECT count() AS count FROM watch_session WHERE platform = $platform")
         .bind(("platform", platform_id.clone()))
         .await?
         .take(0)?;

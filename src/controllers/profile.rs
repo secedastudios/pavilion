@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use askama::Template;
+use axum::Form;
 use axum::extract::State;
 use axum::response::{IntoResponse, Response};
-use axum::Form;
 use serde::Deserialize;
 
 use crate::auth::claims::Claims;
@@ -48,7 +48,9 @@ pub async fn show(
     claims: Claims,
 ) -> Result<Response, AppError> {
     let person = get_person(&state, &claims).await?;
-    render_or_error(&ProfileTemplate { person: person.into() })
+    render_or_error(&ProfileTemplate {
+        person: person.into(),
+    })
 }
 
 pub async fn edit(
@@ -56,9 +58,11 @@ pub async fn edit(
     claims: Claims,
 ) -> Result<Response, AppError> {
     let person = get_person(&state, &claims).await?;
-    let html = ProfileEditTemplate { person: person.into() }
-        .render()
-        .map_err(|e| AppError::Internal(anyhow::anyhow!("Template error: {e}")))?;
+    let html = ProfileEditTemplate {
+        person: person.into(),
+    }
+    .render()
+    .map_err(|e| AppError::Internal(anyhow::anyhow!("Template error: {e}")))?;
     Ok(sse::fragment("#profile-detail", html).into_response())
 }
 
@@ -76,9 +80,7 @@ pub async fn update(
 
     let updated: Option<Person> = state
         .db
-        .query(
-            "UPDATE $person_id SET name = $name, bio = $bio RETURN AFTER"
-        )
+        .query("UPDATE $person_id SET name = $name, bio = $bio RETURN AFTER")
         .bind(("person_id", person_id))
         .bind(("name", form.name.trim().to_string()))
         .bind(("bio", bio))
@@ -86,9 +88,11 @@ pub async fn update(
         .take(0)?;
 
     let person = updated.ok_or(AppError::NotFound)?;
-    let html = ProfileDisplayTemplate { person: person.into() }
-        .render()
-        .map_err(|e| AppError::Internal(anyhow::anyhow!("Template error: {e}")))?;
+    let html = ProfileDisplayTemplate {
+        person: person.into(),
+    }
+    .render()
+    .map_err(|e| AppError::Internal(anyhow::anyhow!("Template error: {e}")))?;
     Ok(sse::fragment("#profile-detail", html).into_response())
 }
 

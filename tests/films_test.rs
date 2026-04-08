@@ -13,7 +13,11 @@ use pavilion::router::{self, AppState};
 async fn build_app() -> axum::Router {
     let db = common::setup_test_db().await;
     let config = common::test_config();
-    router::build_router(AppState { db, config, storage: common::test_storage() })
+    router::build_router(AppState {
+        db,
+        config,
+        storage: common::test_storage(),
+    })
 }
 
 fn auth_cookie(secret: &str) -> String {
@@ -42,7 +46,12 @@ async fn register_person(app: &mut axum::Router) -> String {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::SEE_OTHER);
-    let cookie = response.headers().get("set-cookie").unwrap().to_str().unwrap();
+    let cookie = response
+        .headers()
+        .get("set-cookie")
+        .unwrap()
+        .to_str()
+        .unwrap();
     // Extract just the token part
     cookie.split(';').next().unwrap().to_string()
 }
@@ -65,7 +74,13 @@ async fn create_film(app: &mut axum::Router, cookie: &str) -> String {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::SEE_OTHER);
-    response.headers().get("location").unwrap().to_str().unwrap().to_string()
+    response
+        .headers()
+        .get("location")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string()
 }
 
 // ── Film list requires auth ────────────────────────────────
@@ -256,7 +271,12 @@ async fn cannot_edit_another_persons_film() {
         )
         .await
         .unwrap();
-    let cookie2 = response.headers().get("set-cookie").unwrap().to_str().unwrap();
+    let cookie2 = response
+        .headers()
+        .get("set-cookie")
+        .unwrap()
+        .to_str()
+        .unwrap();
     let cookie2 = cookie2.split(';').next().unwrap();
 
     // Person 2 tries to edit Person 1's film

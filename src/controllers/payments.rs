@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use askama::Template;
+use axum::Form;
 use axum::body::Bytes;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
-use axum::Form;
 use serde::Deserialize;
 use surrealdb::types::RecordId;
 
@@ -61,7 +61,9 @@ pub async fn start_connect_onboarding(
     crate::controllers::platforms::require_curator_public(&state, &claims, &platform).await?;
 
     if !state.config.payments_enabled() {
-        return Err(AppError::Validation("Payments are not configured on this instance.".into()));
+        return Err(AppError::Validation(
+            "Payments are not configured on this instance.".into(),
+        ));
     }
 
     let provider = get_provider(&state)?;
@@ -83,7 +85,7 @@ pub async fn start_connect_onboarding(
                 provider = 'stripe', \
                 external_account_id = $account_id, \
                 onboarding_complete = false \
-             WHERE platform = $platform"
+             WHERE platform = $platform",
         )
         .bind(("platform", platform_id))
         .bind(("account_id", result.account_id))
@@ -151,7 +153,9 @@ pub async fn create_checkout(
     let connected_account_id = accounts
         .first()
         .and_then(|a| a["external_account_id"].as_str())
-        .ok_or_else(|| AppError::Validation("Platform has not connected payment processing.".into()))?
+        .ok_or_else(|| {
+            AppError::Validation("Platform has not connected payment processing.".into())
+        })?
         .to_string();
 
     let provider = get_provider(&state)?;
@@ -182,7 +186,10 @@ pub async fn create_checkout(
                 "{}/p/{platform_slug}/checkout/success?session_id={{CHECKOUT_SESSION_ID}}",
                 state.config.base_url
             ),
-            cancel_url: format!("{}/p/{platform_slug}/{}", state.config.base_url, form.film_id),
+            cancel_url: format!(
+                "{}/p/{platform_slug}/{}",
+                state.config.base_url, form.film_id
+            ),
             metadata,
             application_fee_pct: state.config.facilitation_fee_pct,
         })
@@ -205,12 +212,10 @@ pub async fn stripe_webhook(
         .ok_or(AppError::Unauthorized)?;
 
     let provider = get_provider(&state)?;
-    let event = provider
-        .verify_webhook(&body, signature)
-        .map_err(|e| {
-            tracing::warn!(error = %e, "Invalid Stripe webhook");
-            AppError::Unauthorized
-        })?;
+    let event = provider.verify_webhook(&body, signature).map_err(|e| {
+        tracing::warn!(error = %e, "Invalid Stripe webhook");
+        AppError::Unauthorized
+    })?;
 
     tracing::info!(event_type = %event.event_type, "Stripe webhook received");
 
@@ -256,7 +261,7 @@ async fn handle_checkout_completed(
                     "UPSERT viewer_subscription SET \
                         person = $person, platform = $platform, \
                         provider = 'stripe', status = 'active' \
-                     WHERE person = $person AND platform = $platform"
+                     WHERE person = $person AND platform = $platform",
                 )
                 .bind(("person", person_id.clone()))
                 .bind(("platform", platform_id.clone()))

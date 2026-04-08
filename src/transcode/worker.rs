@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -42,7 +42,7 @@ async fn process_job(
     storage: &StorageClient,
     job_id: &surrealdb::types::RecordId,
     worker_id: &str,
-    work_dir: &PathBuf,
+    work_dir: &Path,
 ) {
     let job = match queue::get_job(db, job_id).await {
         Ok(Some(j)) => j,
@@ -75,7 +75,10 @@ async fn process_job(
     let heartbeat_handle = tokio::spawn(async move {
         loop {
             sleep(HEARTBEAT_INTERVAL).await;
-            if queue::heartbeat(&hb_db, &hb_job_id, &hb_worker_id).await.is_err() {
+            if queue::heartbeat(&hb_db, &hb_job_id, &hb_worker_id)
+                .await
+                .is_err()
+            {
                 break;
             }
         }
@@ -104,7 +107,10 @@ async fn process_job(
 
             // Generate master manifests
             let output_prefix = format!("videos/{film_key}");
-            let renditions: Vec<_> = results.iter().filter_map(|r| r.to_rendition_info()).collect();
+            let renditions: Vec<_> = results
+                .iter()
+                .filter_map(|r| r.to_rendition_info())
+                .collect();
             let hls_master = manifest::generate_hls_master(&renditions, &output_prefix);
             let dash_mpd = manifest::generate_dash_mpd(&renditions, &output_prefix, 0);
 

@@ -12,7 +12,11 @@ use pavilion::router::{self, AppState};
 async fn build_app() -> axum::Router {
     let db = common::setup_test_db().await;
     let config = common::test_config();
-    router::build_router(AppState { db, config, storage: common::test_storage() })
+    router::build_router(AppState {
+        db,
+        config,
+        storage: common::test_storage(),
+    })
 }
 
 async fn body_string(response: axum::http::Response<Body>) -> String {
@@ -36,8 +40,15 @@ async fn register_person(app: &mut axum::Router, email: &str) -> String {
         )
         .await
         .unwrap();
-    resp.headers().get("set-cookie").unwrap().to_str().unwrap()
-        .split(';').next().unwrap().to_string()
+    resp.headers()
+        .get("set-cookie")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .split(';')
+        .next()
+        .unwrap()
+        .to_string()
 }
 
 async fn create_platform(app: &mut axum::Router, cookie: &str) -> String {
@@ -163,11 +174,7 @@ async fn public_platform_requires_active() {
 
     // Platform is in "setup" status, public page should 404
     let resp = app
-        .oneshot(
-            Request::get("/p/test-channel")
-                .body(Body::empty())
-                .unwrap(),
-        )
+        .oneshot(Request::get("/p/test-channel").body(Body::empty()).unwrap())
         .await
         .unwrap();
 
@@ -193,11 +200,7 @@ async fn public_platform_renders_when_active() {
         .unwrap();
 
     let resp = app
-        .oneshot(
-            Request::get("/p/test-channel")
-                .body(Body::empty())
-                .unwrap(),
-        )
+        .oneshot(Request::get("/p/test-channel").body(Body::empty()).unwrap())
         .await
         .unwrap();
 

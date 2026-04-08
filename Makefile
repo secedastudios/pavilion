@@ -1,4 +1,4 @@
-.PHONY: dev services services-down build db-init db-drop db-seed test healthcheck
+.PHONY: dev services services-down build db-init db-drop db-seed test healthcheck docs
 
 dev:
 	PRETTY_LOGS=true cargo run
@@ -34,3 +34,10 @@ test:
 
 healthcheck:
 	curl -s http://localhost:3000/healthcheck | jq .
+
+docs:
+	cargo doc --workspace --no-deps --target-dir docs-build
+	rm -rf docs
+	cp -r docs-build/doc docs
+	rm -rf docs-build
+	@echo "Docs built in docs/"

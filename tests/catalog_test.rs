@@ -12,7 +12,11 @@ use pavilion::router::{self, AppState};
 async fn build_app() -> axum::Router {
     let db = common::setup_test_db().await;
     let config = common::test_config();
-    router::build_router(AppState { db, config, storage: common::test_storage() })
+    router::build_router(AppState {
+        db,
+        config,
+        storage: common::test_storage(),
+    })
 }
 
 async fn body_string(response: axum::http::Response<Body>) -> String {
@@ -36,8 +40,15 @@ async fn register_person(app: &mut axum::Router, email: &str) -> String {
         )
         .await
         .unwrap();
-    resp.headers().get("set-cookie").unwrap().to_str().unwrap()
-        .split(';').next().unwrap().to_string()
+    resp.headers()
+        .get("set-cookie")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .split(';')
+        .next()
+        .unwrap()
+        .to_string()
 }
 
 fn urlencoding(s: &str) -> String {
@@ -60,7 +71,13 @@ async fn create_published_film_with_license(app: &mut axum::Router, cookie: &str
         )
         .await
         .unwrap();
-    let film_url = resp.headers().get("location").unwrap().to_str().unwrap().to_string();
+    let film_url = resp
+        .headers()
+        .get("location")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
     let film_id = film_url.strip_prefix("/films/").unwrap().to_string();
 
     // Publish

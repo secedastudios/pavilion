@@ -13,7 +13,11 @@ use pavilion::router::{self, AppState};
 async fn build_app() -> axum::Router {
     let db = common::setup_test_db().await;
     let config = common::test_config();
-    router::build_router(AppState { db, config, storage: common::test_storage() })
+    router::build_router(AppState {
+        db,
+        config,
+        storage: common::test_storage(),
+    })
 }
 
 async fn body_string(response: axum::http::Response<Body>) -> String {
@@ -27,13 +31,25 @@ async fn register_person(app: &mut axum::Router, email: &str) -> String {
          &accept_terms=yes&accept_no_porn=yes&accept_copyright=yes&accept_talent=yes",
         email.replace('@', "%40")
     );
-    let resp = app.clone().oneshot(
-        Request::post("/register")
-            .header("content-type", "application/x-www-form-urlencoded")
-            .body(Body::from(body)).unwrap(),
-    ).await.unwrap();
-    resp.headers().get("set-cookie").unwrap().to_str().unwrap()
-        .split(';').next().unwrap().to_string()
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::post("/register")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .body(Body::from(body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    resp.headers()
+        .get("set-cookie")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .split(';')
+        .next()
+        .unwrap()
+        .to_string()
 }
 
 // ── Transaction recording ──────────────────────────────────
@@ -48,16 +64,18 @@ async fn record_transaction_with_splits() {
 
     let txn = splits::record_transaction(
         &db,
-        "purchase",
-        999, // $9.99
-        "usd",
-        Some(RecordId::new("film", "film1")),
-        platform_id,
-        Some(buyer_id),
-        Some("ch_test123".into()),
-        5.0,  // 5% facilitation fee
-        Some(filmmaker_id),
-        Some(60.0), // 60% filmmaker share
+        splits::RecordTransactionParams {
+            transaction_type: "purchase".into(),
+            amount_cents: 999,
+            currency: "usd".into(),
+            film_id: Some(RecordId::new("film", "film1")),
+            platform_id,
+            buyer_id: Some(buyer_id),
+            external_id: Some("ch_test123".into()),
+            facilitation_fee_pct: 5.0,
+            filmmaker_id: Some(filmmaker_id),
+            filmmaker_share_pct: Some(60.0),
+        },
     )
     .await
     .unwrap();
@@ -78,16 +96,18 @@ async fn record_transaction_zero_fee() {
 
     let txn = splits::record_transaction(
         &db,
-        "rental",
-        399,
-        "usd",
-        Some(RecordId::new("film", "film1")),
-        RecordId::new("platform", "plat1"),
-        None,
-        None,
-        0.0, // No facilitation fee (self-hosted)
-        Some(RecordId::new("person", "filmmaker1")),
-        Some(50.0),
+        splits::RecordTransactionParams {
+            transaction_type: "rental".into(),
+            amount_cents: 399,
+            currency: "usd".into(),
+            film_id: Some(RecordId::new("film", "film1")),
+            platform_id: RecordId::new("platform", "plat1"),
+            buyer_id: None,
+            external_id: None,
+            facilitation_fee_pct: 0.0,
+            filmmaker_id: Some(RecordId::new("person", "filmmaker1")),
+            filmmaker_share_pct: Some(50.0),
+        },
     )
     .await
     .unwrap();
@@ -124,9 +144,10 @@ async fn platform_revenue_starts_at_zero() {
 async fn revenue_dashboard_requires_auth() {
     let app = build_app().await;
 
-    let resp = app.oneshot(
-        Request::get("/revenue").body(Body::empty()).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .oneshot(Request::get("/revenue").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
 
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }
@@ -136,11 +157,15 @@ async fn revenue_dashboard_loads() {
     let mut app = build_app().await;
     let cookie = register_person(&mut app, "filmmaker@test.com").await;
 
-    let resp = app.oneshot(
-        Request::get("/revenue")
-            .header("cookie", &cookie)
-            .body(Body::empty()).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .oneshot(
+            Request::get("/revenue")
+                .header("cookie", &cookie)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
 
     assert_eq!(resp.status(), StatusCode::OK);
     let html = body_string(resp).await;

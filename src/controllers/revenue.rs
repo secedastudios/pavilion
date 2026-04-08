@@ -41,7 +41,10 @@ pub async fn filmmaker_dashboard(
         .map_err(|e| AppError::Internal(anyhow::anyhow!("Revenue query error: {e}")))?;
 
     let total_earned_display = format_cents(overview.total_earned_cents);
-    render_or_error(&RevenueTemplate { overview, total_earned_display })
+    render_or_error(&RevenueTemplate {
+        overview,
+        total_earned_display,
+    })
 }
 
 /// Curator platform analytics dashboard.

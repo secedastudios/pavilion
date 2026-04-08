@@ -72,7 +72,7 @@ pub async fn verify_relation(
     target_id: &RecordId,
 ) -> Result<bool, surrealdb::Error> {
     let result: Vec<serde_json::Value> = db
-        .query(&format!(
+        .query(format!(
             "SELECT id FROM {relation} WHERE in = $person_id AND out = $target_id LIMIT 1"
         ))
         .bind(("person_id", person_id.clone()))
@@ -117,6 +117,38 @@ pub fn slugify(title: &str) -> String {
         .filter(|s| !s.is_empty())
         .collect::<Vec<_>>()
         .join("-")
+}
+
+/// Parse a comma-separated string into a trimmed, non-empty `Vec<String>`.
+///
+/// Useful for form fields where users type `"Drama, Comedy, Sci-Fi"`.
+///
+/// # Examples
+///
+/// ```ignore
+/// let genres = parse_csv("Drama, Comedy, Sci-Fi");
+/// assert_eq!(genres, vec!["Drama", "Comedy", "Sci-Fi"]);
+///
+/// let empty = parse_csv("");
+/// assert!(empty.is_empty());
+/// ```
+pub fn parse_csv(input: &str) -> Vec<String> {
+    input
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect()
+}
+
+/// Parse a comma-separated string into uppercase tokens.
+///
+/// Used for territory codes (e.g., `"us, gb, fr"` → `["US", "GB", "FR"]`).
+pub fn parse_csv_uppercase(input: &str) -> Vec<String> {
+    input
+        .split(',')
+        .map(|s| s.trim().to_uppercase())
+        .filter(|s| !s.is_empty())
+        .collect()
 }
 
 /// Validation constants used across the application.

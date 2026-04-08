@@ -2,25 +2,38 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use surrealdb::types::{RecordId, SurrealValue};
 
+/// A registered user in the system (filmmaker, platform owner, viewer, or admin).
+///
+/// This is the full database record including sensitive fields like `password_hash`.
+/// Use [`PersonView`] when exposing person data to templates or API responses.
 #[derive(Debug, Serialize, Deserialize, SurrealValue, Clone)]
 pub struct Person {
     pub id: RecordId,
     pub email: String,
     pub name: String,
+    /// Argon2-hashed password. Never expose outside the server.
     pub password_hash: String,
+    /// Role strings such as `"admin"`, `"filmmaker"`, `"viewer"`.
     pub roles: Vec<String>,
     pub bio: Option<String>,
     pub avatar_url: Option<String>,
+    /// Optional link to the user's SlateHub profile for industry identity.
     pub slatehub_id: Option<String>,
     pub gdpr_consent: Option<GdprConsent>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
 
+/// GDPR consent preferences recorded for a [`Person`].
+///
+/// Each field is `None` until the user explicitly opts in or out.
 #[derive(Debug, Serialize, Deserialize, SurrealValue, Clone)]
 pub struct GdprConsent {
+    /// Whether the user consents to marketing communications.
     pub marketing: Option<bool>,
+    /// Whether the user consents to analytics tracking.
     pub analytics: Option<bool>,
+    /// When the consent preferences were last changed.
     pub updated_at: Option<DateTime<Utc>>,
 }
 
@@ -42,7 +55,9 @@ pub struct UpdatePerson {
     pub avatar_url: Option<String>,
 }
 
-/// View model — never exposes password_hash.
+/// Template-safe projection of [`Person`] that excludes `password_hash`,
+/// `slatehub_id`, and `gdpr_consent`. Safe for rendering in HTML templates
+/// and JSON API responses.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PersonView {
     pub id: RecordId,

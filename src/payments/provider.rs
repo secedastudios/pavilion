@@ -22,11 +22,8 @@ pub trait PaymentProvider: Send + Sync {
     ) -> impl std::future::Future<Output = Result<CheckoutResult, PaymentError>> + Send;
 
     /// Verify a webhook signature and parse the event.
-    fn verify_webhook(
-        &self,
-        payload: &[u8],
-        signature: &str,
-    ) -> Result<WebhookEvent, PaymentError>;
+    fn verify_webhook(&self, payload: &[u8], signature: &str)
+    -> Result<WebhookEvent, PaymentError>;
 
     /// Provider name (e.g., "stripe", "mock").
     fn name(&self) -> &str;

@@ -187,7 +187,11 @@ fn revenue_share_must_be_0_to_100() {
 async fn build_app() -> axum::Router {
     let db = common::setup_test_db().await;
     let config = common::test_config();
-    router::build_router(AppState { db, config, storage: common::test_storage() })
+    router::build_router(AppState {
+        db,
+        config,
+        storage: common::test_storage(),
+    })
 }
 
 async fn body_string(response: axum::http::Response<Body>) -> String {
@@ -209,8 +213,16 @@ async fn register_and_create_film(app: &mut axum::Router) -> (String, String) {
         )
         .await
         .unwrap();
-    let cookie = resp.headers().get("set-cookie").unwrap().to_str().unwrap()
-        .split(';').next().unwrap().to_string();
+    let cookie = resp
+        .headers()
+        .get("set-cookie")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .split(';')
+        .next()
+        .unwrap()
+        .to_string();
 
     // Create film
     let film_body = "title=Licensed+Film&synopsis=Test&year=2026&genres=Drama\
@@ -227,7 +239,13 @@ async fn register_and_create_film(app: &mut axum::Router) -> (String, String) {
         )
         .await
         .unwrap();
-    let film_url = resp.headers().get("location").unwrap().to_str().unwrap().to_string();
+    let film_url = resp
+        .headers()
+        .get("location")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
     let film_id = film_url.strip_prefix("/films/").unwrap().to_string();
 
     (cookie, film_id)
@@ -238,7 +256,11 @@ async fn license_routes_require_auth() {
     let app = build_app().await;
 
     let resp = app
-        .oneshot(Request::get("/films/fake/licenses").body(Body::empty()).unwrap())
+        .oneshot(
+            Request::get("/films/fake/licenses")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);

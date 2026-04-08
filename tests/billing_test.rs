@@ -12,7 +12,11 @@ use pavilion::router::{self, AppState};
 async fn build_app() -> axum::Router {
     let db = common::setup_test_db().await;
     let config = common::test_config();
-    router::build_router(AppState { db, config, storage: common::test_storage() })
+    router::build_router(AppState {
+        db,
+        config,
+        storage: common::test_storage(),
+    })
 }
 
 async fn body_string(response: axum::http::Response<Body>) -> String {
@@ -26,13 +30,25 @@ async fn register_person(app: &mut axum::Router, email: &str) -> String {
          &accept_terms=yes&accept_no_porn=yes&accept_copyright=yes&accept_talent=yes",
         email.replace('@', "%40")
     );
-    let resp = app.clone().oneshot(
-        Request::post("/register")
-            .header("content-type", "application/x-www-form-urlencoded")
-            .body(Body::from(body)).unwrap(),
-    ).await.unwrap();
-    resp.headers().get("set-cookie").unwrap().to_str().unwrap()
-        .split(';').next().unwrap().to_string()
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::post("/register")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .body(Body::from(body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    resp.headers()
+        .get("set-cookie")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .split(';')
+        .next()
+        .unwrap()
+        .to_string()
 }
 
 // ── Storage metering ───────────────────────────────────────
@@ -56,7 +72,9 @@ async fn record_upload_increases_totals() {
     let _ = metering::get_usage(&db, &person).await.unwrap();
 
     // Upload a master (1 GB)
-    metering::record_upload(&db, &person, 1_073_741_824, true).await.unwrap();
+    metering::record_upload(&db, &person, 1_073_741_824, true)
+        .await
+        .unwrap();
 
     let usage = metering::get_usage(&db, &person).await.unwrap();
     assert_eq!(usage.total_bytes, 1_073_741_824);
@@ -65,7 +83,9 @@ async fn record_upload_increases_totals() {
     assert_eq!(usage.asset_count, 1);
 
     // Upload a rendition (200 MB)
-    metering::record_upload(&db, &person, 209_715_200, false).await.unwrap();
+    metering::record_upload(&db, &person, 209_715_200, false)
+        .await
+        .unwrap();
 
     let usage = metering::get_usage(&db, &person).await.unwrap();
     assert_eq!(usage.total_bytes, 1_283_457_024);
@@ -110,10 +130,14 @@ async fn add_and_deduct_credits() {
     // Initialize
     let _ = credits::get_balance(&db, &person).await.unwrap();
 
-    let balance = credits::add_credits(&db, &person, 5000, "Purchased $50 credits").await.unwrap();
+    let balance = credits::add_credits(&db, &person, 5000, "Purchased $50 credits")
+        .await
+        .unwrap();
     assert_eq!(balance, 5000);
 
-    let balance = credits::deduct_credits(&db, &person, 2000, "Film acquisition").await.unwrap();
+    let balance = credits::deduct_credits(&db, &person, 2000, "Film acquisition")
+        .await
+        .unwrap();
     assert_eq!(balance, 3000);
 }
 
@@ -133,9 +157,10 @@ async fn deduct_fails_with_insufficient_balance() {
 async fn billing_requires_auth() {
     let app = build_app().await;
 
-    let resp = app.oneshot(
-        Request::get("/billing").body(Body::empty()).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .oneshot(Request::get("/billing").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
 }
 
@@ -144,11 +169,15 @@ async fn billing_dashboard_loads() {
     let mut app = build_app().await;
     let cookie = register_person(&mut app, "filmmaker@test.com").await;
 
-    let resp = app.oneshot(
-        Request::get("/billing")
-            .header("cookie", &cookie)
-            .body(Body::empty()).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .oneshot(
+            Request::get("/billing")
+                .header("cookie", &cookie)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
 
     assert_eq!(resp.status(), StatusCode::OK);
     let html = body_string(resp).await;

@@ -11,7 +11,11 @@ use pavilion::router::{self, AppState};
 async fn healthcheck_returns_ok() {
     let db = common::setup_test_db().await;
     let config = common::test_config();
-    let app = router::build_router(AppState { db, config, storage: common::test_storage() });
+    let app = router::build_router(AppState {
+        db,
+        config,
+        storage: common::test_storage(),
+    });
 
     let response = app
         .oneshot(
@@ -37,7 +41,11 @@ async fn healthcheck_returns_ok() {
 async fn unknown_route_returns_404() {
     let db = common::setup_test_db().await;
     let config = common::test_config();
-    let app = router::build_router(AppState { db, config, storage: common::test_storage() });
+    let app = router::build_router(AppState {
+        db,
+        config,
+        storage: common::test_storage(),
+    });
 
     let response = app
         .oneshot(

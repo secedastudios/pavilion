@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300">
+  <defs>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="40%" stop-color="#141a24"/>
+      <stop offset="100%" stop-color="#1a2030"/>
+    </linearGradient>
+    <linearGradient id="shell1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f5efe5"/>
+      <stop offset="50%" stop-color="#e8dfd0"/>
+      <stop offset="100%" stop-color="#c8bca8"/>
+    </linearGradient>
+    <linearGradient id="shell2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ece4d5"/>
+      <stop offset="50%" stop-color="#ddd2be"/>
+      <stop offset="100%" stop-color="#b8a890"/>
+    </linearGradient>
+    <linearGradient id="shell3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e0d6c5"/>
+      <stop offset="50%" stop-color="#d0c4ae"/>
+      <stop offset="100%" stop-color="#a89880"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1a2030"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </linearGradient>
+    <linearGradient id="base" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8a7d6b"/>
+      <stop offset="100%" stop-color="#605545"/>
+    </linearGradient>
+    <radialGradient id="moon" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f5efe5" stop-opacity="0.95"/>
+      <stop offset="70%" stop-color="#e8dfd0" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#e8dfd0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1200" height="300" fill="url(#sky)"/>
+
+  <!-- Moon -->
+  <circle cx="900" cy="55" r="22" fill="url(#moon)"/>
+  <circle cx="900" cy="55" r="14" fill="#f0ead8" opacity="0.4"/>
+
+  <!-- Stars -->
+  <g fill="#fff">
+    <circle cx="95" cy="30" r="0.9" opacity="0.6"/>
+    <circle cx="220" cy="55" r="0.6" opacity="0.3"/>
+    <circle cx="350" cy="22" r="1" opacity="0.5"/>
+    <circle cx="480" cy="45" r="0.7" opacity="0.35"/>
+    <circle cx="610" cy="20" r="0.8" opacity="0.5"/>
+    <circle cx="750" cy="40" r="0.6" opacity="0.3"/>
+    <circle cx="1020" cy="28" r="0.9" opacity="0.55"/>
+    <circle cx="1120" cy="48" r="0.7" opacity="0.35"/>
+    <circle cx="160" cy="68" r="0.5" opacity="0.2"/>
+    <circle cx="540" cy="60" r="0.5" opacity="0.25"/>
+    <circle cx="1080" cy="65" r="0.4" opacity="0.2"/>
+  </g>
+
+  <!-- Water/harbour -->
+  <rect x="0" y="195" width="1200" height="105" fill="url(#water)"/>
+
+  <!-- Water reflections -->
+  <g opacity="0.06" stroke="#e8dfd0" stroke-width="0.5">
+    <line x1="480" y1="205" x2="520" y2="205"/>
+    <line x1="560" y1="210" x2="610" y2="210"/>
+    <line x1="620" y1="215" x2="680" y2="215"/>
+    <line x1="500" y1="220" x2="550" y2="220"/>
+    <line x1="590" y1="225" x2="660" y2="225"/>
+    <line x1="530" y1="232" x2="600" y2="232"/>
+    <line x1="640" y1="236" x2="690" y2="236"/>
+    <line x1="510" y1="242" x2="570" y2="242"/>
+  </g>
+
+  <!-- Building reflection in water (faint) -->
+  <g opacity="0.04" transform="translate(600, 390) scale(1, -1)">
+    <path d="M -60,195 Q -50,150 -40,130 Q -25,160 -10,195 Z" fill="#e8dfd0"/>
+    <path d="M -15,195 Q 0,120 10,100 Q 25,140 35,195 Z" fill="#e8dfd0"/>
+    <path d="M 30,195 Q 50,110 65,85 Q 80,130 90,195 Z" fill="#e8dfd0"/>
+  </g>
+
+  <!-- ===== OPERA HOUSE / PAVILION STRUCTURE ===== -->
+  <g transform="translate(585, 100)">
+
+    <!-- Platform/podium base -->
+    <rect x="-120" y="92" width="240" height="8" rx="1" fill="url(#base)" opacity="0.9"/>
+    <rect x="-130" y="97" width="260" height="5" rx="1" fill="#504535" opacity="0.7"/>
+
+    <!-- Shell 1 (leftmost, smallest) -->
+    <path d="M -95,92 Q -85,55 -70,35 Q -55,60 -45,92 Z" fill="url(#shell3)" opacity="0.85"/>
+    <path d="M -95,92 Q -85,55 -70,35" fill="none" stroke="#d0c4ae" stroke-width="0.6" opacity="0.5"/>
+
+    <!-- Shell 2 (left-center) -->
+    <path d="M -55,92 Q -40,30 -20,5 Q 0,45 10,92 Z" fill="url(#shell2)" opacity="0.9"/>
+    <path d="M -55,92 Q -40,30 -20,5" fill="none" stroke="#ddd2be" stroke-width="0.7" opacity="0.5"/>
+    <!-- Shell 2 rib lines -->
+    <path d="M -45,92 Q -35,40 -20,10" fill="none" stroke="#c8bca8" stroke-width="0.3" opacity="0.25"/>
+    <path d="M -30,92 Q -22,50 -18,18" fill="none" stroke="#c8bca8" stroke-width="0.3" opacity="0.2"/>
+
+    <!-- Shell 3 (center, tallest — the hero) -->
+    <path d="M 0,92 Q 20,-5 45,-35 Q 65,25 80,92 Z" fill="url(#shell1)" opacity="0.95"/>
+    <path d="M 0,92 Q 20,-5 45,-35" fill="none" stroke="#f0ead8" stroke-width="0.8" opacity="0.5"/>
+    <!-- Shell 3 rib lines -->
+    <path d="M 15,92 Q 28,10 45,-30" fill="none" stroke="#e0d6c5" stroke-width="0.3" opacity="0.3"/>
+    <path d="M 30,92 Q 38,20 44,-25" fill="none" stroke="#e0d6c5" stroke-width="0.3" opacity="0.25"/>
+    <path d="M 50,92 Q 52,35 46,-20" fill="none" stroke="#d0c4ae" stroke-width="0.3" opacity="0.2"/>
+
+    <!-- Shell 4 (right, behind — receding) -->
+    <path d="M 70,92 Q 82,40 95,20 Q 105,55 110,92 Z" fill="url(#shell3)" opacity="0.7"/>
+    <path d="M 70,92 Q 82,40 95,20" fill="none" stroke="#c8bca8" stroke-width="0.5" opacity="0.35"/>
+
+    <!-- Shell 5 (far right, smallest) -->
+    <path d="M 100,92 Q 108,60 115,48 Q 120,68 122,92 Z" fill="url(#shell3)" opacity="0.5"/>
+
+    <!-- Subtle warm glow at base (interior light) -->
+    <rect x="-80" y="85" width="160" height="7" rx="2" fill="#e8a44a" opacity="0.06"/>
+  </g>
+
+  <!-- Title -->
+  <text x="600" y="262" text-anchor="middle"
+        font-family="'Roboto', 'Helvetica Neue', 'Arial', sans-serif"
+        font-size="38" font-weight="300" letter-spacing="18" fill="#e8dfd0">
+    PAVILION
+  </text>
+
+  <!-- Thin ornamental line -->
+  <line x1="480" y1="270" x2="720" y2="270" stroke="#8a7d6b" stroke-width="0.4" opacity="0.35"/>
+
+  <!-- Tagline -->
+  <text x="600" y="286" text-anchor="middle"
+        font-family="'Roboto', 'Helvetica Neue', 'Arial', sans-serif"
+        font-size="9" letter-spacing="4.5" fill="#8a7d6b" font-weight="300">
+    OPEN-SOURCE FILM DISTRIBUTION
+  </text>
+</svg>

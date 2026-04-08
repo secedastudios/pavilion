@@ -2,15 +2,12 @@
 //! Applies Content-Security-Policy, X-Frame-Options, X-Content-Type-Options,
 //! and other hardening headers to every outgoing HTTP response.
 
+use axum::extract::Request;
 use axum::http::{HeaderValue, Response};
 use axum::middleware::Next;
-use axum::extract::Request;
 
 /// Security headers middleware.
-pub async fn security_headers(
-    request: Request,
-    next: Next,
-) -> Response<axum::body::Body> {
+pub async fn security_headers(request: Request, next: Next) -> Response<axum::body::Body> {
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
 
@@ -18,10 +15,7 @@ pub async fn security_headers(
         "x-content-type-options",
         HeaderValue::from_static("nosniff"),
     );
-    headers.insert(
-        "x-frame-options",
-        HeaderValue::from_static("DENY"),
-    );
+    headers.insert("x-frame-options", HeaderValue::from_static("DENY"));
     headers.insert(
         "x-xss-protection",
         HeaderValue::from_static("1; mode=block"),
@@ -39,7 +33,7 @@ pub async fn security_headers(
              img-src 'self' data: https:; \
              connect-src 'self' https://api.stripe.com; \
              frame-src https://js.stripe.com; \
-             font-src 'self'"
+             font-src 'self'",
         ),
     );
 

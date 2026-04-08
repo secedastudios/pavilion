@@ -1,15 +1,14 @@
 use std::sync::Arc;
 
 use askama::Template;
+use axum::Form;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::Form;
 use serde::Deserialize;
 use surrealdb::types::{RecordId, SurrealValue};
 
 use crate::auth::claims::Claims;
-use crate::auth::middleware::OptionalClaims;
 use crate::delivery::{audit, manifest, token};
 use crate::error::AppError;
 use crate::models::film::{Film, FilmView};
@@ -100,7 +99,9 @@ async fn enforce_rights(
             Some("No active license"),
         )
         .await;
-        return Err(AppError::LicenseViolation("No active license for this film.".into()));
+        return Err(AppError::LicenseViolation(
+            "No active license for this film.".into(),
+        ));
     }
 
     // 5. Check DMCA status
@@ -116,20 +117,25 @@ async fn enforce_rights(
             Some("Active DMCA claim"),
         )
         .await;
-        return Err(AppError::LicenseViolation("This film is currently subject to a copyright claim.".into()));
+        return Err(AppError::LicenseViolation(
+            "This film is currently subject to a copyright claim.".into(),
+        ));
     }
 
     // 6. Check viewer entitlement
     // Determine if the active license requires payment (TVOD/SVOD) or is free (AVOD/CC)
     let licenses = crate::licensing::rights::licenses_for_film(&state.db, &film.id).await?;
-    let license_types: Vec<&str> = licenses.iter()
+    let license_types: Vec<&str> = licenses
+        .iter()
         .filter(|l| l.active)
         .map(|l| l.license_type.as_str())
         .collect();
 
     // If all active licenses require payment, check entitlement
     let needs_entitlement = !license_types.is_empty()
-        && !license_types.iter().any(|t| matches!(*t, "avod" | "cc" | "free"));
+        && !license_types
+            .iter()
+            .any(|t| matches!(*t, "avod" | "cc" | "free"));
 
     if needs_entitlement {
         let entitlement = crate::payments::entitlements::check_entitlement(
@@ -138,7 +144,8 @@ async fn enforce_rights(
             &film.id,
             &platform.id,
             license_types.first().unwrap_or(&"tvod"),
-        ).await?;
+        )
+        .await?;
 
         if entitlement.is_none() {
             audit::log_access(
@@ -176,11 +183,12 @@ pub async fn player_page(
 ) -> Result<Response, AppError> {
     let ctx = enforce_rights(&state, &platform_slug, &film_slug, &claims).await?;
 
-    let manifest_url = format!(
-        "/watch/{platform_slug}/{film_slug}/manifest.m3u8"
-    );
+    let manifest_url = format!("/watch/{platform_slug}/{film_slug}/manifest.m3u8");
 
-    let theme_css = ctx.platform.theme.as_ref()
+    let theme_css = ctx
+        .platform
+        .theme
+        .as_ref()
         .map(|t| t.to_css_overrides())
         .unwrap_or_default();
 
@@ -242,14 +250,17 @@ pub async fn hls_manifest(
         &film_key,
         &platform_key,
         &state.config.jwt_secret,
-        300,
-        "/segments/",
+        crate::util::validation::SEGMENT_TOKEN_TTL_SECS,
+        crate::util::validation::SEGMENT_URL_PREFIX,
     );
 
     Ok((
         StatusCode::OK,
         [
-            (axum::http::header::CONTENT_TYPE, "application/vnd.apple.mpegurl".to_string()),
+            (
+                axum::http::header::CONTENT_TYPE,
+                "application/vnd.apple.mpegurl".to_string(),
+            ),
             (axum::http::header::CACHE_CONTROL, "no-store".to_string()),
         ],
         signed,
@@ -281,14 +292,17 @@ pub async fn dash_manifest(
         &film_key,
         &platform_key,
         &state.config.jwt_secret,
-        300,
-        "/segments/",
+        crate::util::validation::SEGMENT_TOKEN_TTL_SECS,
+        crate::util::validation::SEGMENT_URL_PREFIX,
     );
 
     Ok((
         StatusCode::OK,
         [
-            (axum::http::header::CONTENT_TYPE, "application/dash+xml".to_string()),
+            (
+                axum::http::header::CONTENT_TYPE,
+                "application/dash+xml".to_string(),
+            ),
             (axum::http::header::CACHE_CONTROL, "no-store".to_string()),
         ],
         signed,
@@ -296,29 +310,30 @@ pub async fn dash_manifest(
         .into_response())
 }
 
-/// Segment proxy — validates token and streams the segment.
+/// Segment proxy — validates token, verifies identity, and streams the segment.
+///
+/// Requires authentication. The token's `subject` field must match the
+/// authenticated person's key — leaked tokens cannot be used by other users.
 pub async fn segment_proxy(
     State(state): State<Arc<AppState>>,
-    OptionalClaims(claims): OptionalClaims,
+    claims: Claims,
     Path(token_str): Path<String>,
 ) -> Result<Response, AppError> {
-    let seg_token = token::SegmentToken::verify(&token_str, &state.config.jwt_secret)
-        .map_err(|e| {
+    let seg_token =
+        token::SegmentToken::verify(&token_str, &state.config.jwt_secret).map_err(|e| {
             tracing::warn!(error = %e, "Invalid segment token");
             AppError::Unauthorized
         })?;
 
-    // Verify person matches if authenticated
-    if let Some(ref c) = claims {
-        let person_key = crate::util::record_id_key_string(&c.person_id().key);
-        if !seg_token.matches_subject(&person_key) {
-            tracing::warn!(
-                token_subject = %seg_token.subject,
-                request_person = %person_key,
-                "Segment token person mismatch"
-            );
-            return Err(AppError::Unauthorized);
-        }
+    // Always verify the token's subject matches the authenticated person
+    let person_key = claims.person_key_str();
+    if !seg_token.matches_subject(&person_key) {
+        tracing::warn!(
+            token_subject = %seg_token.subject,
+            request_person = %person_key,
+            "Segment token person mismatch"
+        );
+        return Err(AppError::Unauthorized);
     }
 
     // Stream segment from RustFS
@@ -335,7 +350,10 @@ pub async fn segment_proxy(
         StatusCode::OK,
         [
             (axum::http::header::CONTENT_TYPE, content_type),
-            (axum::http::header::CACHE_CONTROL, "private, max-age=300".to_string()),
+            (
+                axum::http::header::CACHE_CONTROL,
+                "private, max-age=300".to_string(),
+            ),
         ],
         bytes,
     )
@@ -371,7 +389,8 @@ pub async fn playhead_heartbeat(
         .take(0)?;
     let film = films.into_iter().next().ok_or(AppError::NotFound)?;
 
-    let completed = form.duration
+    let completed = form
+        .duration
         .map(|d| d > 0 && form.position >= (d * 90 / 100))
         .unwrap_or(false);
 
@@ -387,7 +406,7 @@ pub async fn playhead_heartbeat(
                 duration_seconds = $duration, \
                 completed = $completed, \
                 last_heartbeat = time::now() \
-             WHERE person = $person AND film = $film AND platform = $platform"
+             WHERE person = $person AND film = $film AND platform = $platform",
         )
         .bind(("person", claims.person_id()))
         .bind(("film", film.id))
@@ -418,7 +437,7 @@ async fn get_resume_position(
         .query(
             "SELECT progress_seconds FROM watch_session \
              WHERE person = $person AND film = $film AND platform = $platform \
-             LIMIT 1"
+             LIMIT 1",
         )
         .bind(("person", claims.person_id()))
         .bind(("film", film_id.clone()))

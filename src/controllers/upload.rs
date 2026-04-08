@@ -35,10 +35,7 @@ pub async fn upload_film(
         .map_err(|e| AppError::Validation(format!("Upload error: {e}")))?
     {
         if field.name() == Some("file") {
-            file_name = field
-                .file_name()
-                .unwrap_or("upload.mp4")
-                .to_string();
+            file_name = field.file_name().unwrap_or("upload.mp4").to_string();
 
             let bytes = field
                 .bytes()
@@ -102,7 +99,7 @@ pub async fn upload_film(
                 storage_key = $storage_key, \
                 size_bytes = $size_bytes \
              RETURN AFTER); \
-             RELATE $film->has_asset->$asset[0].id;"
+             RELATE $film->has_asset->$asset[0].id;",
         )
         .bind(("storage_key", storage_key))
         .bind(("size_bytes", size_bytes))
@@ -156,19 +153,21 @@ pub async fn upload_poster(
 
     // Update film with poster URLs
     let fid = surrealdb::types::RecordId::new("film", film_id.as_str());
-    state.db.query(
-        "UPDATE $fid SET \
+    state
+        .db
+        .query(
+            "UPDATE $fid SET \
             poster_url = $medium, \
             poster_thumb = $thumb, \
             poster_small = $small, \
-            poster_large = $large"
-    )
-    .bind(("fid", fid))
-    .bind(("medium", keys.medium))
-    .bind(("thumb", keys.thumb))
-    .bind(("small", keys.small))
-    .bind(("large", keys.large))
-    .await?;
+            poster_large = $large",
+        )
+        .bind(("fid", fid))
+        .bind(("medium", keys.medium))
+        .bind(("thumb", keys.thumb))
+        .bind(("small", keys.small))
+        .bind(("large", keys.large))
+        .await?;
 
     // Track storage
     let person_id = claims.person_id();

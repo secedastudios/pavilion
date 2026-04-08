@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use askama::Template;
+use axum::Form;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::Form;
 use serde::Deserialize;
 
 use crate::auth::claims::Claims;
@@ -61,16 +61,14 @@ pub async fn update_consent(
             "UPDATE $person_id SET \
                 gdpr_consent.marketing = $marketing, \
                 gdpr_consent.analytics = $analytics, \
-                gdpr_consent.updated_at = time::now()"
+                gdpr_consent.updated_at = time::now()",
         )
         .bind(("person_id", claims.person_id()))
         .bind(("marketing", marketing))
         .bind(("analytics", analytics))
         .await?;
 
-    let html = format!(
-        r#"<p class="settings-saved">Consent preferences updated.</p>"#
-    );
+    let html = r#"<p class="settings-saved">Consent preferences updated.</p>"#.to_string();
     Ok(sse::fragment("#consent-result", html).into_response())
 }
 
@@ -98,7 +96,10 @@ pub async fn data_export(
     Ok((
         StatusCode::OK,
         [
-            (axum::http::header::CONTENT_TYPE, "application/json".to_string()),
+            (
+                axum::http::header::CONTENT_TYPE,
+                "application/json".to_string(),
+            ),
             (
                 axum::http::header::CONTENT_DISPOSITION,
                 "attachment; filename=\"pavilion-data-export.json\"".to_string(),
@@ -116,15 +117,26 @@ pub async fn delete_account(
 ) -> Result<Response, AppError> {
     let person_id = claims.person_id();
 
-    // Delete graph edges first, then the person record
+    // Full GDPR-compliant cascade: delete all personal data across every table.
+    // Must match the admin GDPR delete in admin.rs.
     let person_id_str = format!("{:?}", person_id);
     state
         .db
         .query(
-            "DELETE FROM agreed_to WHERE in = $person_id; \
-             DELETE $person_id;"
+            "DELETE FROM agreed_to WHERE in = $pid; \
+             DELETE FROM filmmaker_of WHERE in = $pid; \
+             DELETE FROM curator_of WHERE in = $pid; \
+             DELETE FROM attending WHERE in = $pid; \
+             DELETE FROM watch_session WHERE person = $pid; \
+             DELETE FROM entitlement WHERE person = $pid; \
+             DELETE FROM viewer_subscription WHERE person = $pid; \
+             DELETE FROM rating WHERE person = $pid; \
+             DELETE FROM credit_balance WHERE person = $pid; \
+             DELETE FROM credit_transaction WHERE person = $pid; \
+             DELETE FROM storage_usage WHERE person = $pid; \
+             DELETE $pid;",
         )
-        .bind(("person_id", person_id))
+        .bind(("pid", person_id))
         .await?;
 
     tracing::info!(person = %person_id_str, "Account deleted (GDPR right to erasure)");
@@ -135,7 +147,7 @@ pub async fn delete_account(
         [
             (
                 axum::http::header::SET_COOKIE,
-                "pavilion_token=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax".to_string(),
+                crate::controllers::auth::clear_token_cookie(),
             ),
             (axum::http::header::LOCATION, "/".to_string()),
         ],

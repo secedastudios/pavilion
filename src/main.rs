@@ -8,7 +8,7 @@ use pavilion_media::storage::StorageClient;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let config = Config::from_env();
+    let config = Config::from_env()?;
     init_logging(&config);
 
     tracing::info!(

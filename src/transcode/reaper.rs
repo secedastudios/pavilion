@@ -30,7 +30,7 @@ async fn reap_stale_jobs(db: &Db) -> Result<(), surrealdb::Error> {
         .query(
             "SELECT * FROM transcode_job \
              WHERE status IN ['claimed', 'processing'] \
-               AND claimed_at < time::now() - $threshold_duration"
+               AND claimed_at < time::now() - $threshold_duration",
         )
         .bind(("threshold_duration", format!("{}s", STALE_THRESHOLD_SECS)))
         .await?
@@ -45,7 +45,7 @@ async fn reap_stale_jobs(db: &Db) -> Result<(), surrealdb::Error> {
                     error_msg = 'Worker heartbeat timeout (max retries exceeded)', \
                     worker_id = NONE, \
                     claimed_at = NONE \
-                 WHERE status IN ['claimed', 'processing']"
+                 WHERE status IN ['claimed', 'processing']",
             )
             .bind(("job_id", job.id.clone()))
             .await?;
@@ -60,7 +60,7 @@ async fn reap_stale_jobs(db: &Db) -> Result<(), surrealdb::Error> {
                     error_msg = 'Worker heartbeat timeout (re-queued)', \
                     worker_id = NONE, \
                     claimed_at = NONE \
-                 WHERE status IN ['claimed', 'processing']"
+                 WHERE status IN ['claimed', 'processing']",
             )
             .bind(("job_id", job.id.clone()))
             .await?;

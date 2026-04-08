@@ -1,8 +1,8 @@
 use std::path::Path;
 
+use s3::Region;
 use s3::bucket::Bucket;
 use s3::creds::Credentials;
-use s3::Region;
 
 use crate::config::StorageConfig;
 use crate::error::MediaError;
@@ -43,11 +43,7 @@ impl StorageClient {
     }
 
     /// Upload a file to storage.
-    pub async fn put_file(
-        &self,
-        key: &str,
-        file_path: &Path,
-    ) -> Result<(), MediaError> {
+    pub async fn put_file(&self, key: &str, file_path: &Path) -> Result<(), MediaError> {
         let content = tokio::fs::read(file_path)
             .await
             .map_err(|e| MediaError::Storage(format!("Read file error: {e}")))?;
@@ -84,11 +80,7 @@ impl StorageClient {
     }
 
     /// Download a file from storage to a local path.
-    pub async fn get_file(
-        &self,
-        key: &str,
-        dest_path: &Path,
-    ) -> Result<(), MediaError> {
+    pub async fn get_file(&self, key: &str, dest_path: &Path) -> Result<(), MediaError> {
         let response = self
             .bucket
             .get_object(key)
@@ -180,18 +172,10 @@ impl StorageClient {
         {
             let path = entry.path();
             if path.is_dir() {
-                let sub_prefix = format!(
-                    "{}/{}",
-                    key_prefix,
-                    entry.file_name().to_string_lossy()
-                );
+                let sub_prefix = format!("{}/{}", key_prefix, entry.file_name().to_string_lossy());
                 count += Box::pin(self.upload_directory(&path, &sub_prefix)).await?;
             } else {
-                let key = format!(
-                    "{}/{}",
-                    key_prefix,
-                    entry.file_name().to_string_lossy()
-                );
+                let key = format!("{}/{}", key_prefix, entry.file_name().to_string_lossy());
                 self.put_file(&key, &path).await?;
                 count += 1;
             }

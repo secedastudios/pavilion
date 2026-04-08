@@ -1,0 +1,60 @@
+services:
+    pavilion:
+        build: .
+        ports:
+            - "3000:3000"
+        environment:
+            DATABASE_URL: ws://surrealdb:8000
+            DATABASE_NS: pavilion
+            DATABASE_DB: pavilion
+            DATABASE_USER: ${DATABASE_USER:-root}
+            DATABASE_PASS: ${DATABASE_PASS:-changeme}
+            JWT_SECRET: ${JWT_SECRET:-changeme}
+            RUSTFS_ENDPOINT: http://rustfs:9000
+            RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-rustfsadmin}
+            RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:-rustfsadmin}
+            RUSTFS_BUCKET: pavilion
+            QDRANT_ENDPOINT: http://qdrant:6334
+            HOST: 0.0.0.0
+            PORT: 3000
+            BASE_URL: ${BASE_URL:-http://localhost:3000}
+            PRETTY_LOGS: "false"
+            RUST_LOG: pavilion=info,tower_http=info
+            STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+            STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+            STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+            FACILITATION_FEE_PCT: ${FACILITATION_FEE_PCT:-5.0}
+            TMDB_API_KEY: ${TMDB_API_KEY:-}
+        depends_on:
+            - surrealdb
+            - rustfs
+            - qdrant
+        restart: unless-stopped
+
+    surrealdb:
+        image: surrealdb/surrealdb:v3
+        command: start --user ${DATABASE_USER:-root} --pass ${DATABASE_PASS:-changeme} --bind 0.0.0.0:8000 surrealkv://data/pavilion.db
+        volumes:
+            - surreal-data:/data
+        restart: unless-stopped
+
+    rustfs:
+        image: rustfs/rustfs:latest
+        command: /data
+        environment:
+            RUSTFS_ROOT_USER: ${RUSTFS_ACCESS_KEY:-rustfsadmin}
+            RUSTFS_ROOT_PASSWORD: ${RUSTFS_SECRET_KEY:-rustfsadmin}
+        volumes:
+            - rustfs-data:/data
+        restart: unless-stopped
+
+    qdrant:
+        image: qdrant/qdrant:latest
+        volumes:
+            - qdrant-data:/qdrant/storage
+        restart: unless-stopped
+
+volumes:
+    surreal-data:
+    rustfs-data:
+    qdrant-data:

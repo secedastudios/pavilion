@@ -4,5 +4,7 @@
 surreal-data/
 rustfs-data/
 qdrant-data/
+docs/
+docs-build/
 .DS_Store
 history.txt

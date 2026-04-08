@@ -4,8 +4,8 @@ use askama::Template;
 use axum::extract::State;
 use axum::response::Response;
 
-use crate::auth::middleware::OptionalClaims;
 use crate::auth::claims::Claims;
+use crate::auth::middleware::OptionalClaims;
 use crate::error::AppError;
 use crate::models::film::{Film, FilmView};
 use crate::router::AppState;
@@ -27,17 +27,21 @@ pub async fn home(
     OptionalClaims(claims): OptionalClaims,
 ) -> Result<Response, AppError> {
     // Show all published films with active licenses
-    let films: Vec<Film> = state.db
+    let films: Vec<Film> = state
+        .db
         .query(
             "SELECT * FROM film \
              WHERE status = 'published' \
                AND count(->licensed_via->license[WHERE active = true]) > 0 \
-             ORDER BY created_at DESC LIMIT 50"
+             ORDER BY created_at DESC LIMIT 50",
         )
         .await?
         .take(0)?;
 
     let views: Vec<FilmView> = films.into_iter().map(FilmView::from).collect();
 
-    render_or_error(&ShowcaseTemplate { films: views, claims })
+    render_or_error(&ShowcaseTemplate {
+        films: views,
+        claims,
+    })
 }

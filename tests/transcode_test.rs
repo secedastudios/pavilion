@@ -140,7 +140,9 @@ async fn jobs_for_film_returns_all_jobs() {
     let film_id = RecordId::new("film", "test-film");
     let profile = TranscodeProfile::h264_default();
 
-    queue::enqueue(&db, film_id.clone(), profile.clone()).await.unwrap();
+    queue::enqueue(&db, film_id.clone(), profile.clone())
+        .await
+        .unwrap();
     queue::enqueue(&db, film_id.clone(), profile).await.unwrap();
 
     let jobs = queue::jobs_for_film(&db, &film_id).await.unwrap();

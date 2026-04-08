@@ -27,13 +27,12 @@ pub async fn enqueue(
 ///
 /// Uses a two-step approach: SELECT the oldest queued job, then UPDATE it
 /// with a WHERE guard to prevent double-claims.
-pub async fn claim(
-    db: &Db,
-    worker_id: &str,
-) -> Result<Option<TranscodeJob>, surrealdb::Error> {
+pub async fn claim(db: &Db, worker_id: &str) -> Result<Option<TranscodeJob>, surrealdb::Error> {
     // Find the oldest queued job
     let candidates: Vec<TranscodeJob> = db
-        .query("SELECT * FROM transcode_job WHERE status = 'queued' ORDER BY created_at ASC LIMIT 1")
+        .query(
+            "SELECT * FROM transcode_job WHERE status = 'queued' ORDER BY created_at ASC LIMIT 1",
+        )
         .await?
         .take(0)?;
 
@@ -51,7 +50,7 @@ pub async fn claim(
                 worker_id = $worker_id, \
                 claimed_at = time::now() \
              WHERE status = 'queued' \
-             RETURN AFTER"
+             RETURN AFTER",
         )
         .bind(("job_id", candidate.id))
         .bind(("worker_id", worker_id.to_string()))
@@ -69,7 +68,7 @@ pub async fn heartbeat(
 ) -> Result<(), surrealdb::Error> {
     db.query(
         "UPDATE $job_id SET claimed_at = time::now() \
-         WHERE worker_id = $worker_id AND status IN ['claimed', 'processing']"
+         WHERE worker_id = $worker_id AND status IN ['claimed', 'processing']",
     )
     .bind(("job_id", job_id.clone()))
     .bind(("worker_id", worker_id.to_string()))
@@ -93,12 +92,9 @@ pub async fn update_progress(
 }
 
 /// Mark a job as complete.
-pub async fn complete(
-    db: &Db,
-    job_id: &RecordId,
-) -> Result<(), surrealdb::Error> {
+pub async fn complete(db: &Db, job_id: &RecordId) -> Result<(), surrealdb::Error> {
     db.query(
-        "UPDATE $job_id SET status = 'complete', progress_pct = 100, completed_at = time::now()"
+        "UPDATE $job_id SET status = 'complete', progress_pct = 100, completed_at = time::now()",
     )
     .bind(("job_id", job_id.clone()))
     .await?;
@@ -106,18 +102,14 @@ pub async fn complete(
 }
 
 /// Mark a job as failed. Re-queues if retries remain, otherwise permanently fails.
-pub async fn fail(
-    db: &Db,
-    job_id: &RecordId,
-    error_msg: &str,
-) -> Result<(), surrealdb::Error> {
+pub async fn fail(db: &Db, job_id: &RecordId, error_msg: &str) -> Result<(), surrealdb::Error> {
     db.query(
         "UPDATE $job_id SET \
             retry_count = retry_count + 1, \
             error_msg = $error_msg, \
             status = IF retry_count + 1 >= max_retries THEN 'failed' ELSE 'queued' END, \
             worker_id = NONE, \
-            claimed_at = NONE"
+            claimed_at = NONE",
     )
     .bind(("job_id", job_id.clone()))
     .bind(("error_msg", error_msg.to_string()))
@@ -126,10 +118,7 @@ pub async fn fail(
 }
 
 /// Get a job by ID.
-pub async fn get_job(
-    db: &Db,
-    job_id: &RecordId,
-) -> Result<Option<TranscodeJob>, surrealdb::Error> {
+pub async fn get_job(db: &Db, job_id: &RecordId) -> Result<Option<TranscodeJob>, surrealdb::Error> {
     db.select(job_id.clone()).await
 }
 

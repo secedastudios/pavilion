@@ -18,12 +18,54 @@ pub struct ResolutionProfile {
 }
 
 pub const H264_LADDER: &[ResolutionProfile] = &[
-    ResolutionProfile { name: "360p",  width: 640,  height: 360,  bitrate: "800k",   maxrate: "856k",   bufsize: "1200k"  },
-    ResolutionProfile { name: "480p",  width: 854,  height: 480,  bitrate: "1400k",  maxrate: "1498k",  bufsize: "2100k"  },
-    ResolutionProfile { name: "720p",  width: 1280, height: 720,  bitrate: "2800k",  maxrate: "2996k",  bufsize: "4200k"  },
-    ResolutionProfile { name: "1080p", width: 1920, height: 1080, bitrate: "5000k",  maxrate: "5350k",  bufsize: "7500k"  },
-    ResolutionProfile { name: "1440p", width: 2560, height: 1440, bitrate: "10000k", maxrate: "10700k", bufsize: "15000k" },
-    ResolutionProfile { name: "2160p", width: 3840, height: 2160, bitrate: "16000k", maxrate: "17120k", bufsize: "24000k" },
+    ResolutionProfile {
+        name: "360p",
+        width: 640,
+        height: 360,
+        bitrate: "800k",
+        maxrate: "856k",
+        bufsize: "1200k",
+    },
+    ResolutionProfile {
+        name: "480p",
+        width: 854,
+        height: 480,
+        bitrate: "1400k",
+        maxrate: "1498k",
+        bufsize: "2100k",
+    },
+    ResolutionProfile {
+        name: "720p",
+        width: 1280,
+        height: 720,
+        bitrate: "2800k",
+        maxrate: "2996k",
+        bufsize: "4200k",
+    },
+    ResolutionProfile {
+        name: "1080p",
+        width: 1920,
+        height: 1080,
+        bitrate: "5000k",
+        maxrate: "5350k",
+        bufsize: "7500k",
+    },
+    ResolutionProfile {
+        name: "1440p",
+        width: 2560,
+        height: 1440,
+        bitrate: "10000k",
+        maxrate: "10700k",
+        bufsize: "15000k",
+    },
+    ResolutionProfile {
+        name: "2160p",
+        width: 3840,
+        height: 2160,
+        bitrate: "16000k",
+        maxrate: "17120k",
+        bufsize: "24000k",
+    },
 ];
 
 /// Result of a single rendition transcode.
@@ -66,25 +108,47 @@ where
 
     let mut cmd = Command::new("ffmpeg");
     cmd.args([
-        "-i", input.to_str().unwrap_or_default(),
-        "-c:v", "libx264",
-        "-preset", "medium",
-        "-profile:v", "main",
-        "-b:v", profile.bitrate,
-        "-maxrate", profile.maxrate,
-        "-bufsize", profile.bufsize,
-        "-vf", &format!("scale={}:{}", profile.width, profile.height),
-        "-c:a", "aac",
-        "-b:a", "128k",
-        "-ac", "2",
-        "-f", "hls",
-        "-hls_time", "6",
-        "-hls_playlist_type", "vod",
-        "-hls_segment_type", "fmp4",
-        "-hls_fmp4_init_filename", "init.mp4",
-        "-hls_segment_filename", rendition_dir.join(&segment_pattern).to_str().unwrap_or_default(),
-        "-progress", "pipe:1",
-        "-y", rendition_dir.join(&playlist).to_str().unwrap_or_default(),
+        "-i",
+        input.to_str().unwrap_or_default(),
+        "-c:v",
+        "libx264",
+        "-preset",
+        "medium",
+        "-profile:v",
+        "main",
+        "-b:v",
+        profile.bitrate,
+        "-maxrate",
+        profile.maxrate,
+        "-bufsize",
+        profile.bufsize,
+        "-vf",
+        &format!("scale={}:{}", profile.width, profile.height),
+        "-c:a",
+        "aac",
+        "-b:a",
+        "128k",
+        "-ac",
+        "2",
+        "-f",
+        "hls",
+        "-hls_time",
+        "6",
+        "-hls_playlist_type",
+        "vod",
+        "-hls_segment_type",
+        "fmp4",
+        "-hls_fmp4_init_filename",
+        "init.mp4",
+        "-hls_segment_filename",
+        rendition_dir
+            .join(&segment_pattern)
+            .to_str()
+            .unwrap_or_default(),
+        "-progress",
+        "pipe:1",
+        "-y",
+        rendition_dir.join(&playlist).to_str().unwrap_or_default(),
     ]);
 
     cmd.stdout(Stdio::piped());
@@ -97,11 +161,11 @@ where
         let mut lines = reader.lines();
         tokio::spawn(async move {
             while let Ok(Some(line)) = lines.next_line().await {
-                if let Some(time_str) = line.strip_prefix("out_time_us=") {
-                    if let Ok(us) = time_str.parse::<u64>() {
-                        let seconds = us / 1_000_000;
-                        on_progress(seconds.min(99) as u8);
-                    }
+                if let Some(time_str) = line.strip_prefix("out_time_us=")
+                    && let Ok(us) = time_str.parse::<u64>()
+                {
+                    let seconds = us / 1_000_000;
+                    on_progress(seconds.min(99) as u8);
                 }
             }
         });
@@ -109,7 +173,11 @@ where
 
     let output = child.wait().await?;
     if !output.success() {
-        anyhow::bail!("FFmpeg failed for {} with exit code: {:?}", profile.name, output.code());
+        anyhow::bail!(
+            "FFmpeg failed for {} with exit code: {:?}",
+            profile.name,
+            output.code()
+        );
     }
 
     Ok(TranscodeResult {
@@ -127,7 +195,12 @@ pub async fn transcode_all_renditions(
 ) -> anyhow::Result<Vec<TranscodeResult>> {
     let mut results = Vec::new();
     for (i, profile) in H264_LADDER.iter().enumerate() {
-        tracing::info!(resolution = profile.name, "Transcoding rendition {}/{}", i + 1, H264_LADDER.len());
+        tracing::info!(
+            resolution = profile.name,
+            "Transcoding rendition {}/{}",
+            i + 1,
+            H264_LADDER.len()
+        );
         let result = transcode_rendition(input, output_dir, profile, |_| {}).await?;
         results.push(result);
     }
@@ -145,7 +218,8 @@ pub async fn transcode_and_upload(
     output_prefix: &str,
     work_dir: &Path,
 ) -> Result<Vec<TranscodeResult>, crate::error::MediaError> {
-    tokio::fs::create_dir_all(work_dir).await
+    tokio::fs::create_dir_all(work_dir)
+        .await
         .map_err(|e| crate::error::MediaError::Transcode(format!("Work dir error: {e}")))?;
 
     // Download master from storage
@@ -168,9 +242,11 @@ pub async fn transcode_and_upload(
     let hls_master = crate::manifest::generate_hls_master(&rendition_infos, output_prefix);
     let dash_mpd = crate::manifest::generate_dash_mpd(&rendition_infos, output_prefix, 0);
 
-    tokio::fs::write(output_dir.join("master.m3u8"), &hls_master).await
+    tokio::fs::write(output_dir.join("master.m3u8"), &hls_master)
+        .await
         .map_err(|e| crate::error::MediaError::Transcode(format!("Write manifest: {e}")))?;
-    tokio::fs::write(output_dir.join("manifest.mpd"), &dash_mpd).await
+    tokio::fs::write(output_dir.join("manifest.mpd"), &dash_mpd)
+        .await
         .map_err(|e| crate::error::MediaError::Transcode(format!("Write manifest: {e}")))?;
 
     // Upload everything to storage

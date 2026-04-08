@@ -66,7 +66,7 @@ pub async fn check_entitlement(
             .query(
                 "SELECT * FROM viewer_subscription \
                  WHERE person = $person AND platform = $platform AND status = 'active' \
-                 LIMIT 1"
+                 LIMIT 1",
             )
             .bind(("person", person_id.clone()))
             .bind(("platform", platform_id.clone()))
@@ -84,7 +84,7 @@ pub async fn check_entitlement(
             "SELECT * FROM entitlement \
              WHERE person = $person AND film = $film AND platform = $platform \
              AND (expires_at IS NONE OR expires_at > time::now()) \
-             LIMIT 1"
+             LIMIT 1",
         )
         .bind(("person", person_id.clone()))
         .bind(("film", film_id.clone()))
@@ -138,7 +138,7 @@ pub async fn grant_subscription_entitlements(
                 film = $film.out, \
                 platform = $platform, \
                 entitlement_type = 'subscription'; \
-         }"
+         }",
     )
     .bind(("person", person_id.clone()))
     .bind(("platform", platform_id.clone()))
@@ -155,7 +155,7 @@ pub async fn revoke_subscription_entitlements(
 ) -> Result<(), surrealdb::Error> {
     db.query(
         "DELETE FROM entitlement \
-         WHERE person = $person AND platform = $platform AND entitlement_type = 'subscription'"
+         WHERE person = $person AND platform = $platform AND entitlement_type = 'subscription'",
     )
     .bind(("person", person_id.clone()))
     .bind(("platform", platform_id.clone()))

@@ -10,7 +10,11 @@ use pavilion::router::{self, AppState};
 async fn build_app() -> axum::Router {
     let db = common::setup_test_db().await;
     let config = common::test_config();
-    router::build_router(AppState { db, config, storage: common::test_storage() })
+    router::build_router(AppState {
+        db,
+        config,
+        storage: common::test_storage(),
+    })
 }
 
 async fn body_string(response: axum::http::Response<Body>) -> String {
@@ -24,25 +28,48 @@ async fn register_person(app: &mut axum::Router, email: &str) -> String {
          &accept_terms=yes&accept_no_porn=yes&accept_copyright=yes&accept_talent=yes",
         email.replace('@', "%40")
     );
-    let resp = app.clone().oneshot(
-        Request::post("/register")
-            .header("content-type", "application/x-www-form-urlencoded")
-            .body(Body::from(body)).unwrap(),
-    ).await.unwrap();
-    resp.headers().get("set-cookie").unwrap().to_str().unwrap()
-        .split(';').next().unwrap().to_string()
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::post("/register")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .body(Body::from(body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    resp.headers()
+        .get("set-cookie")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .split(';')
+        .next()
+        .unwrap()
+        .to_string()
 }
 
 /// Create a platform and return (cookie, platform_id).
 async fn create_platform(app: &mut axum::Router, cookie: &str) -> String {
-    let resp = app.clone().oneshot(
-        Request::post("/platforms")
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", cookie)
-            .body(Body::from("name=Event+Channel")).unwrap(),
-    ).await.unwrap();
-    resp.headers().get("location").unwrap().to_str().unwrap()
-        .strip_prefix("/platforms/").unwrap().to_string()
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::post("/platforms")
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", cookie)
+                .body(Body::from("name=Event+Channel"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    resp.headers()
+        .get("location")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .strip_prefix("/platforms/")
+        .unwrap()
+        .to_string()
 }
 
 /// Create a film and return the film_id.
@@ -53,8 +80,14 @@ async fn create_film(app: &mut axum::Router, cookie: &str) -> String {
             .header("cookie", cookie)
             .body(Body::from("title=Event+Film&declare_copyright=yes&declare_talent=yes&declare_no_prohibited=yes")).unwrap(),
     ).await.unwrap();
-    resp.headers().get("location").unwrap().to_str().unwrap()
-        .strip_prefix("/films/").unwrap().to_string()
+    resp.headers()
+        .get("location")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .strip_prefix("/films/")
+        .unwrap()
+        .to_string()
 }
 
 #[tokio::test]
@@ -64,20 +97,29 @@ async fn events_require_curator() {
     let plat_id = create_platform(&mut app, &cookie).await;
 
     // Owner can access
-    let resp = app.clone().oneshot(
-        Request::get(&format!("/platforms/{plat_id}/events"))
-            .header("cookie", &cookie)
-            .body(Body::empty()).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::get(&format!("/platforms/{plat_id}/events"))
+                .header("cookie", &cookie)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
 
     // Other person cannot
     let other_cookie = register_person(&mut app, "other@test.com").await;
-    let resp = app.oneshot(
-        Request::get(&format!("/platforms/{plat_id}/events"))
-            .header("cookie", &other_cookie)
-            .body(Body::empty()).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .oneshot(
+            Request::get(&format!("/platforms/{plat_id}/events"))
+                .header("cookie", &other_cookie)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
     assert_eq!(resp.status(), StatusCode::FORBIDDEN);
 }
 
@@ -92,21 +134,27 @@ async fn create_event_success() {
         "title=Film+Premiere&event_type=premiere&film_id={film_id}\
          &start_time=2026-12-25T20%3A00&max_attendees=100&ticket_price=5.00"
     );
-    let resp = app.clone().oneshot(
-        Request::post(&format!("/platforms/{plat_id}/events"))
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &cookie)
-            .body(Body::from(body)).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::post(&format!("/platforms/{plat_id}/events"))
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &cookie)
+                .body(Body::from(body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
 
     assert_eq!(resp.status(), StatusCode::SEE_OTHER);
     let location = resp.headers().get("location").unwrap().to_str().unwrap();
     assert!(location.starts_with("/events/"));
 
     // View the event
-    let resp = app.oneshot(
-        Request::get(location).body(Body::empty()).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .oneshot(Request::get(location).body(Body::empty()).unwrap())
+        .await
+        .unwrap();
 
     assert_eq!(resp.status(), StatusCode::OK);
     let html = body_string(resp).await;
@@ -127,33 +175,53 @@ async fn purchase_ticket_and_cap() {
         "title=Tiny+Event&event_type=screening&film_id={film_id}\
          &start_time=2026-12-25T20%3A00&max_attendees=1"
     );
-    let resp = app.clone().oneshot(
-        Request::post(&format!("/platforms/{plat_id}/events"))
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &curator_cookie)
-            .body(Body::from(body)).unwrap(),
-    ).await.unwrap();
-    let event_url = resp.headers().get("location").unwrap().to_str().unwrap().to_string();
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::post(&format!("/platforms/{plat_id}/events"))
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &curator_cookie)
+                .body(Body::from(body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let event_url = resp
+        .headers()
+        .get("location")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
     let event_id = event_url.strip_prefix("/events/").unwrap();
 
     // First attendee registers
     let viewer1 = register_person(&mut app, "viewer1@test.com").await;
-    let resp = app.clone().oneshot(
-        Request::post(&format!("/events/{event_id}/tickets"))
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &viewer1)
-            .body(Body::empty()).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::post(&format!("/events/{event_id}/tickets"))
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &viewer1)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
     assert_eq!(resp.status(), StatusCode::SEE_OTHER);
 
     // Second attendee gets rejected (sold out)
     let viewer2 = register_person(&mut app, "viewer2@test.com").await;
-    let resp = app.oneshot(
-        Request::post(&format!("/events/{event_id}/tickets"))
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &viewer2)
-            .body(Body::empty()).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .oneshot(
+            Request::post(&format!("/events/{event_id}/tickets"))
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &viewer2)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
     assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
 }
 
@@ -167,40 +235,66 @@ async fn event_status_transitions() {
     let body = format!(
         "title=Live+Event&event_type=screening&film_id={film_id}&start_time=2026-12-25T20%3A00"
     );
-    let resp = app.clone().oneshot(
-        Request::post(&format!("/platforms/{plat_id}/events"))
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &cookie)
-            .body(Body::from(body)).unwrap(),
-    ).await.unwrap();
-    let event_id = resp.headers().get("location").unwrap().to_str().unwrap()
-        .strip_prefix("/events/").unwrap().to_string();
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::post(&format!("/platforms/{plat_id}/events"))
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &cookie)
+                .body(Body::from(body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let event_id = resp
+        .headers()
+        .get("location")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .strip_prefix("/events/")
+        .unwrap()
+        .to_string();
 
     // upcoming → live
-    let resp = app.clone().oneshot(
-        Request::post(&format!("/events/{event_id}/status"))
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &cookie)
-            .body(Body::from("status=live")).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::post(&format!("/events/{event_id}/status"))
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &cookie)
+                .body(Body::from("status=live"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
     assert_eq!(resp.status(), StatusCode::SEE_OTHER);
 
     // live → ended
-    let resp = app.clone().oneshot(
-        Request::post(&format!("/events/{event_id}/status"))
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &cookie)
-            .body(Body::from("status=ended")).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::post(&format!("/events/{event_id}/status"))
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &cookie)
+                .body(Body::from("status=ended"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
     assert_eq!(resp.status(), StatusCode::SEE_OTHER);
 
     // ended → live is invalid
-    let resp = app.oneshot(
-        Request::post(&format!("/events/{event_id}/status"))
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &cookie)
-            .body(Body::from("status=live")).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .oneshot(
+            Request::post(&format!("/events/{event_id}/status"))
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &cookie)
+                .body(Body::from("status=live"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
     assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
 }
 
@@ -214,18 +308,30 @@ async fn event_detail_public() {
     let body = format!(
         "title=Public+Event&event_type=screening&film_id={film_id}&start_time=2026-12-25T20%3A00"
     );
-    let resp = app.clone().oneshot(
-        Request::post(&format!("/platforms/{plat_id}/events"))
-            .header("content-type", "application/x-www-form-urlencoded")
-            .header("cookie", &cookie)
-            .body(Body::from(body)).unwrap(),
-    ).await.unwrap();
-    let event_url = resp.headers().get("location").unwrap().to_str().unwrap().to_string();
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::post(&format!("/platforms/{plat_id}/events"))
+                .header("content-type", "application/x-www-form-urlencoded")
+                .header("cookie", &cookie)
+                .body(Body::from(body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let event_url = resp
+        .headers()
+        .get("location")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
 
     // Public (no auth) can view event detail
-    let resp = app.oneshot(
-        Request::get(&event_url).body(Body::empty()).unwrap(),
-    ).await.unwrap();
+    let resp = app
+        .oneshot(Request::get(&event_url).body(Body::empty()).unwrap())
+        .await
+        .unwrap();
 
     assert_eq!(resp.status(), StatusCode::OK);
     let html = body_string(resp).await;

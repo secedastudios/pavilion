@@ -7,5 +7,5 @@ pub mod reaper;
 pub mod worker;
 
 // Re-export from pavilion-media
-pub use pavilion_media::transcode as ffmpeg;
 pub use pavilion_media::manifest;
+pub use pavilion_media::transcode as ffmpeg;
